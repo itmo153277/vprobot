@@ -1,4 +1,4 @@
-TEST_FILES = movement.test
+TEST_FILES = jsonparse.test
 EXTRA_DIST = $(TEST_FILES)
 
 tester_CXXFLAGS = @CHECK_CFLAGS@

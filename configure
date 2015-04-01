@@ -595,6 +595,8 @@ CHECK_FALSE
 CHECK_TRUE
 CHECK_LIBS
 CHECK_CFLAGS
+JSONCPP_LIBS
+JSONCPP_CFLAGS
 PKG_CONFIG_LIBDIR
 PKG_CONFIG_PATH
 PKG_CONFIG
@@ -716,6 +718,8 @@ CCC
 PKG_CONFIG
 PKG_CONFIG_PATH
 PKG_CONFIG_LIBDIR
+JSONCPP_CFLAGS
+JSONCPP_LIBS
 CHECK_CFLAGS
 CHECK_LIBS'
 
@@ -1358,6 +1362,10 @@ Some influential environment variables:
               directories to add to pkg-config's search path
   PKG_CONFIG_LIBDIR
               path overriding pkg-config's built-in search path
+  JSONCPP_CFLAGS
+              C compiler flags for JSONCPP, overriding pkg-config
+  JSONCPP_LIBS
+              linker flags for JSONCPP, overriding pkg-config
   CHECK_CFLAGS
               C compiler flags for CHECK, overriding pkg-config
   CHECK_LIBS  linker flags for CHECK, overriding pkg-config
@@ -4126,6 +4134,81 @@ $as_echo "no" >&6; }
 		PKG_CONFIG=""
 	fi
 fi
+
+pkg_failed=no
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for JSONCPP" >&5
+$as_echo_n "checking for JSONCPP... " >&6; }
+
+if test -n "$JSONCPP_CFLAGS"; then
+    pkg_cv_JSONCPP_CFLAGS="$JSONCPP_CFLAGS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"jsoncpp >= 0.6.0\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "jsoncpp >= 0.6.0") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_JSONCPP_CFLAGS=`$PKG_CONFIG --cflags "jsoncpp >= 0.6.0" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+if test -n "$JSONCPP_LIBS"; then
+    pkg_cv_JSONCPP_LIBS="$JSONCPP_LIBS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"jsoncpp >= 0.6.0\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "jsoncpp >= 0.6.0") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_JSONCPP_LIBS=`$PKG_CONFIG --libs "jsoncpp >= 0.6.0" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+
+
+
+if test $pkg_failed = yes; then
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+
+if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
+        _pkg_short_errors_supported=yes
+else
+        _pkg_short_errors_supported=no
+fi
+        if test $_pkg_short_errors_supported = yes; then
+	        JSONCPP_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "jsoncpp >= 0.6.0" 2>&1`
+        else
+	        JSONCPP_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "jsoncpp >= 0.6.0" 2>&1`
+        fi
+	# Put the nasty error message in config.log where it belongs
+	echo "$JSONCPP_PKG_ERRORS" >&5
+
+	as_fn_error $? "couldn't find jsoncpp" "$LINENO" 5
+elif test $pkg_failed = untried; then
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+	as_fn_error $? "couldn't find jsoncpp" "$LINENO" 5
+else
+	JSONCPP_CFLAGS=$pkg_cv_JSONCPP_CFLAGS
+	JSONCPP_LIBS=$pkg_cv_JSONCPP_LIBS
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+fi;
+LIBS="$JSONCPP_LIBS $LIBS"
+CFLAGS="$JSONCPP_CFLAGS $CFLAGS"
+CXXFLAGS="$JSONCPP_CFLAGS $CXXFLAGS"
+
 
 pkg_failed=no
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for CHECK" >&5

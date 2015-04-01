@@ -1,0 +1,13 @@
+{
+	"test": "json_parse",
+	"data": {
+		"arrayLength": 5,
+		"nullCount": 1,
+		"stringCount": 1,
+		"objectCount": 1,
+		"intCount": 1,
+		"doubleCount": 1,
+		"arrayData": [0, null, 0.25, "Array Element", {"resultCode": 10}],
+		"targetCode": 10
+	}
+}

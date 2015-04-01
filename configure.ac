@@ -30,6 +30,12 @@ AC_PROG_CXX
 
 # Checks for libraries.
 
+PKG_CHECK_MODULES([JSONCPP], [jsoncpp >= 0.6.0], [],
+	[AC_MSG_ERROR([couldn't find jsoncpp])]);
+LIBS="$JSONCPP_LIBS $LIBS"
+CFLAGS="$JSONCPP_CFLAGS $CFLAGS"
+CXXFLAGS="$JSONCPP_CFLAGS $CXXFLAGS"
+
 PKG_CHECK_MODULES([CHECK], [check >= 0.9.0], [can_use_check="yes"],
 	[AC_MSG_WARN([Check not found; cannot run tests])])
 AM_CONDITIONAL([CHECK], [test "x$can_use_check" = "xyes"])
