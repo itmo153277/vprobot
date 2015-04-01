@@ -464,8 +464,7 @@ EXTRA_DIST = $(TEST_FILES)
 tester_CXXFLAGS = @CHECK_CFLAGS@
 tester_LDADD = @CHECK_LIBS@
 tester_SOURCES = tester.cpp
-@CHECK_FALSE@LOG_COMPILER = 
-@CHECK_TRUE@LOG_COMPILER = $(top_builddir)/test/tester
+TEST_LOG_COMPILER = $(top_builddir)/test/tester
 all: all-am
 
 .SUFFIXES:

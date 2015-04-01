@@ -5,15 +5,15 @@ tester_CXXFLAGS = @CHECK_CFLAGS@
 tester_LDADD = @CHECK_LIBS@
 tester_SOURCES = tester.cpp
 
+TEST_LOG_COMPILER = $(top_builddir)/test/tester
+
 if CHECK
 TESTS = $(TEST_FILES)
 check_PROGRAMS = tester
-LOG_COMPILER = $(top_builddir)/test/tester
 
 else
 
 TESTS = 
 check_PROGRAMS =
-LOG_COMPILER =
 
 endif
