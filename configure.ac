@@ -4,8 +4,8 @@ AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE([-Wall -Werror])
 AC_CONFIG_HEADERS([config.h])
 
-AC_COPYRIGHT([Copyright (c) 2015Ivanov Viktor])
-AC_REVISION([rev1])
+AC_COPYRIGHT([Copyright (c) 2015 Ivanov Viktor])
+AC_REVISION([rev3])
 
 AC_CANONICAL_HOST
 
@@ -28,13 +28,20 @@ esac
 AC_PROG_CC
 AC_PROG_CXX
 
+AC_LANG([C++])
+
 # Checks for libraries.
 
-PKG_CHECK_MODULES([JSONCPP], [jsoncpp >= 0.6.0], [],
+PKG_CHECK_MODULES([jsoncpp], [jsoncpp >= 0.6.0], [],
 	[AC_MSG_ERROR([couldn't find jsoncpp])]);
-LIBS="$JSONCPP_LIBS $LIBS"
-CFLAGS="$JSONCPP_CFLAGS $CFLAGS"
-CXXFLAGS="$JSONCPP_CFLAGS $CXXFLAGS"
+LIBS="$jsoncpp_LIBS $LIBS"
+CFLAGS="$jsoncpp_CFLAGS $CFLAGS"
+CXXFLAGS="$jsoncpp_CFLAGS $CXXFLAGS"
+
+PKG_CHECK_MODULES([Eigen3], [eigen3 >= 3.2.0], [],
+	[AC_MSG_ERROR([couldn't find Eigen3])]);
+LIBS="$Eigen3_LIBS $LIBS"
+CXXFLAGS="$Eigen3_CFLAGS $CXXFLAGS"
 
 PKG_CHECK_MODULES([CHECK], [check >= 0.9.0], [can_use_check="yes"],
 	[AC_MSG_WARN([Check not found; cannot run tests])])
