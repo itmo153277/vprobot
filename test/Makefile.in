@@ -93,7 +93,8 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am_tester_OBJECTS = tester-tester.$(OBJEXT)
 tester_OBJECTS = $(am_tester_OBJECTS)
-tester_DEPENDENCIES =
+tester_DEPENDENCIES = $(top_builddir)/model/libvprmodel.a \
+	$(top_builddir)/ui/libvprui.a
 tester_LINK = $(CXXLD) $(tester_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
 AM_V_P = $(am__v_P_@AM_V@)
@@ -361,6 +362,7 @@ DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 ACLOCAL = @ACLOCAL@
 AMTAR = @AMTAR@
 AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
+AR = @AR@
 AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
 AUTOMAKE = @AUTOMAKE@
@@ -406,6 +408,7 @@ PATH_SEPARATOR = @PATH_SEPARATOR@
 PKG_CONFIG = @PKG_CONFIG@
 PKG_CONFIG_LIBDIR = @PKG_CONFIG_LIBDIR@
 PKG_CONFIG_PATH = @PKG_CONFIG_PATH@
+RANLIB = @RANLIB@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 STRIP = @STRIP@
@@ -414,6 +417,7 @@ abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
 abs_top_builddir = @abs_top_builddir@
 abs_top_srcdir = @abs_top_srcdir@
+ac_ct_AR = @ac_ct_AR@
 ac_ct_CC = @ac_ct_CC@
 ac_ct_CXX = @ac_ct_CXX@
 am__include = @am__include@
@@ -465,9 +469,9 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 TEST_FILES = jsonparse.test
 EXTRA_DIST = $(TEST_FILES)
-tester_CXXFLAGS = @CHECK_CFLAGS@
-tester_LDADD = @CHECK_LIBS@
 tester_SOURCES = tester.cpp
+tester_CXXFLAGS = @CHECK_CFLAGS@
+tester_LDADD = @CHECK_LIBS@ $(top_builddir)/model/libvprmodel.a $(top_builddir)/ui/libvprui.a
 TEST_LOG_COMPILER = $(top_builddir)/test/tester
 all: all-am
 

@@ -25,8 +25,11 @@ case ${host_os} in
 esac
 
 # Checks for programs.
+
+AC_PROG_RANLIB
 AC_PROG_CC
 AC_PROG_CXX
+AM_PROG_AR
 
 AC_LANG([C++])
 
@@ -54,5 +57,7 @@ AM_CONDITIONAL([CHECK], [test "x$can_use_check" = "xyes"])
 # Checks for library functions.
 
 AC_CONFIG_FILES([Makefile
-                 test/Makefile])
+                 model/Makefile
+                 test/Makefile
+                 ui/Makefile])
 AC_OUTPUT
