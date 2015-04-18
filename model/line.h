@@ -39,8 +39,8 @@ typedef std::vector<Point> Line;
 Point Rotate(const Point &r, double angle);
 /* Функция для замера расстояния от центра до отрезка по направлению */
 double Measure(const Point &x1, const Point &x2, double angle);
-/* Функция для замера расстояния от центра до линии по направлению */
-double Measure(const Line &x, double angle);
+/* Функция для замера расстояния от точки до линии по направлению */
+double Measure(const Line &x, const Point &p, double angle);
 
 }
 

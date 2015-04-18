@@ -56,16 +56,16 @@ double vprobot::line::Measure(const Point &x1, const Point &x2, double angle) {
 	return (x1r[0] + Rate * x2r[0]) / (1 + Rate);
 }
 
-/* Функция для замера расстояния от центра до линии по направлению */
-double vprobot::line::Measure(const Line &x, double angle) {
+/* Функция для замера расстояния от точки до линии по направлению */
+double vprobot::line::Measure(const Line &x, const Point &p, double angle) {
 	double d = 0;
 
 	if (x.size() > 0) {
 		Line::const_iterator x1 = x.begin();
 		Line::const_iterator x2 = x1 + 1;
 
-		do {
-			double cd = Measure(*x1, *x2, angle);
+		for (;;) {
+			double cd = Measure(*x1 - p, *x2 - p, angle);
 
 			if (LessOrEqualsZero(cd)) {
 				continue;
@@ -74,10 +74,12 @@ double vprobot::line::Measure(const Line &x, double angle) {
 				d = cd;
 			}
 			x1++;
+			if (x1 == x.end())
+				break;
 			x2++;
 			if (x2 == x.end())
 				x2 = x.begin();
-		} while (x1 != x.end());
+		}
 	}
 	return d;
 }
