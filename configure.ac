@@ -34,6 +34,8 @@ AM_PROG_AR
 
 AC_LANG([C++])
 
+AX_CXX_COMPILE_STDCXX_11([], [mandatory])
+
 # Checks for libraries.
 
 PKG_CHECK_MODULES([jsoncpp], [jsoncpp >= 0.6.0], [],
