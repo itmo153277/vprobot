@@ -3,3 +3,4 @@ SUBDIRS = model ui test
 bin_PROGRAMS = vprobot
 vprobot_SOURCES = main.cpp
 vprobot_LDADD = model/libvprmodel.a ui/libvprui.a
+noinst_HEADERS = types.h

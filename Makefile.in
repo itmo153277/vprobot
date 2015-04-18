@@ -14,6 +14,7 @@
 
 @SET_MAKE@
 
+
 VPATH = @srcdir@
 am__is_gnu_make = test -n '$(MAKEFILE_LIST)' && test -n '$(MAKELEVEL)'
 am__make_running_with_option = \
@@ -83,8 +84,8 @@ subdir = .
 DIST_COMMON = INSTALL NEWS README AUTHORS ChangeLog \
 	$(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(top_srcdir)/configure $(am__configure_deps) \
-	$(srcdir)/config.h.in depcomp COPYING ar-lib compile \
-	config.guess config.sub install-sh missing
+	$(srcdir)/config.h.in depcomp $(noinst_HEADERS) COPYING ar-lib \
+	compile config.guess config.sub install-sh missing
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/pkg.m4 \
 	$(top_srcdir)/configure.ac
@@ -145,6 +146,7 @@ am__can_run_installinfo = \
     n|no|NO) false;; \
     *) (install-info --version) >/dev/null 2>&1;; \
   esac
+HEADERS = $(noinst_HEADERS)
 RECURSIVE_CLEAN_TARGETS = mostlyclean-recursive clean-recursive	\
   distclean-recursive maintainer-clean-recursive
 am__recursive_targets = \
@@ -329,6 +331,7 @@ ACLOCAL_AMFLAGS = -I m4
 SUBDIRS = model ui test
 vprobot_SOURCES = main.cpp
 vprobot_LDADD = model/libvprmodel.a ui/libvprui.a
+noinst_HEADERS = types.h
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
 
@@ -748,7 +751,7 @@ distcleancheck: distclean
 	       exit 1; } >&2
 check-am: all-am
 check: check-recursive
-all-am: Makefile $(PROGRAMS) config.h
+all-am: Makefile $(PROGRAMS) $(HEADERS) config.h
 installdirs: installdirs-recursive
 installdirs-am:
 	for dir in "$(DESTDIR)$(bindir)"; do \

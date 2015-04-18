@@ -2590,6 +2590,7 @@ else
 fi
 
 
+
 case ${host_os} in
 	*cygwin* )
 	CFLAGS="-mwin32 $CFLAGS"

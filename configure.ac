@@ -18,6 +18,7 @@ esac
 AM_CONDITIONAL([WINDOWS], [test "x$host_os_windows" = "xyes"])
 
 dnl Should add -mwin32 to enable _WIN32 macro
+
 case ${host_os} in
 	*cygwin* )
 	CFLAGS="-mwin32 $CFLAGS"
