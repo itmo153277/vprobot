@@ -49,9 +49,9 @@ int ParseAndRun(const char *in_file) {
 	if (!reader.parse(json.str(), root))
 		return EXIT_FAILURE;
 
-	CPointMap PointMap(root);
+	CLineMap LineMap(root);
 
-	cout << PointMap.GetDistance(Point(0,0), 0) << endl;
+	cout << LineMap.GetDistance(Point(0,0), 0.0) << endl;
 
 	return EXIT_SUCCESS;
 }

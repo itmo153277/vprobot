@@ -35,7 +35,7 @@ namespace map {
 /* Класс карты */
 class CMap {
 private:
-	CMap(const CMap &Map) {};
+	CMap(const CMap &Map) {}
 public:
 	CMap() {}
 	virtual ~CMap() {}
@@ -54,10 +54,29 @@ private:
 	/* Содержание карты */
 	MapList m_List;
 
-	CPointMap(const CPointMap &Map) {};
+	CPointMap(const CPointMap &Map) {}
 public:
 	CPointMap(const Json::Value &MapObject);
 	~CPointMap();
+
+	/* Произвести измерение из точки по направлению */
+	double GetDistance(const line::Point &p, double angle);
+	/* Произвести измерение из точки до нужного маяка */
+	double GetDistance(const line::Point &p, int index);
+};
+
+/* Карта, содержащая линии */
+class CLineMap: public CMap {
+private:
+	typedef std::vector<line::Line> MapList;
+
+	/* Содержание карты */
+	MapList m_List;
+
+	CLineMap(const CLineMap &Map) {}
+public:
+	CLineMap(const Json::Value &MapObject);
+	~CLineMap();
 
 	/* Произвести измерение из точки по направлению */
 	double GetDistance(const line::Point &p, double angle);

@@ -17,9 +17,11 @@
 */
 
 #include "map.h"
+#include "../types.h"
 
 using namespace ::std;
 using namespace ::Eigen;
+using namespace ::vprobot;
 using namespace ::vprobot::line;
 using namespace ::vprobot::map;
 
@@ -50,4 +52,56 @@ double vprobot::map::CPointMap::GetDistance(const Point &p, double angle) {
 /* Произвести измерение из точки до нужного маяка */
 double vprobot::map::CPointMap::GetDistance(const Point &p, int index) {
 	return (p - m_List[index]).norm();
+}
+
+/* CLineMap */
+
+vprobot::map::CLineMap::CLineMap(const Json::Value &MapObject) {
+	if (MapObject.isArray()) {
+		/* Загружаем данные */
+		int i;
+
+		for (i = 0; i < MapObject.size(); i++) {
+			const Json::Value l = MapObject[i];
+
+			if (l.isArray()) {
+				MapList::reverse_iterator rl;
+				int j;
+
+				m_List.emplace_back();
+				rl = m_List.rbegin();
+				for (j = 0; j < l.size(); j++) {
+					const Json::Value p = l[j];
+
+					rl->push_back(Point(p["x"].asDouble(), p["y"].asDouble()));
+				}
+			}
+		}
+	}
+}
+
+vprobot::map::CLineMap::~CLineMap() {
+}
+
+/* Произвести измерение из точки по направлению */
+double vprobot::map::CLineMap::GetDistance(const Point &p, double angle) {
+	double d = 0;
+
+	for (auto l: m_List) {
+		double l_d = Measure(l, p, angle);
+
+		if (LessOrEqualsZero(l_d)) {
+			continue;
+		}
+		if (LessThan(l_d, d) || EqualsZero(d)) {
+			d = l_d;
+		}
+	}
+	return d;
+}
+
+/* Произвести измерение из точки до нужного маяка */
+double vprobot::map::CLineMap::GetDistance(const Point &p, int index) {
+	/* Нет маяков, невозможно измерить */
+	return 0;
 }
