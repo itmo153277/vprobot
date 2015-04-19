@@ -68,18 +68,17 @@ double vprobot::line::Measure(const Line &x, const Point &p, double angle) {
 		for (;;) {
 			double cd = Measure(*x1 - p, *x2 - p, angle);
 
-			if (LessOrEqualsZero(cd)) {
-				continue;
-			}
-			if (LessThan(cd, d) || EqualsZero(d)) {
+			if (GreaterThanZero(cd) && (LessThan(cd, d) || EqualsZero(d))) {
 				d = cd;
 			}
 			x1++;
-			if (x1 == x.end())
+			if (x1 == x.end()) {
 				break;
+			}
 			x2++;
-			if (x2 == x.end())
+			if (x2 == x.end()) {
 				x2 = x.begin();
+			}
 		}
 	}
 	return d;
