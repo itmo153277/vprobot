@@ -16,6 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <cmath>
 #include "line.h"
 #include "../types.h"
 
@@ -60,7 +61,7 @@ double vprobot::line::Measure(const Point &x1, const Point &x2, double angle) {
 double vprobot::line::Measure(const Line &x, const Point &p, double angle) {
 	double d = 0;
 
-	if (x.size() > 0) {
+	if (x.size() > 1) {
 		Line::const_iterator x1 = x.begin();
 		Line::const_iterator x2 = x1 + 1;
 
@@ -83,4 +84,3 @@ double vprobot::line::Measure(const Line &x, const Point &p, double angle) {
 	}
 	return d;
 }
-

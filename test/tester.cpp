@@ -21,7 +21,7 @@
 #include <fstream>
 #include <sstream>
 #include <json/json.h>
-#include <stdlib.h>
+#include <cstdlib>
 #include <check.h>
 
 #ifdef fail
