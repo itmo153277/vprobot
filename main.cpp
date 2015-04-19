@@ -16,6 +16,49 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <string>
+#include <json/json.h>
+#include <cstdlib>
+#include <cerrno>
+
+#include "model/line.h"
+#include "model/map.h"
+#include "types.h"
+
+using namespace ::std;
+using namespace ::vprobot;
+using namespace ::vprobot::map;
+using namespace ::vprobot::line;
+
+int ParseAndRun(const char *in_file) {
+	std::ifstream inp(in_file);
+	std::stringstream json;
+
+	if (inp.fail()) {
+		clog << strerror(errno) << endl;
+		return EXIT_FAILURE;
+	}
+	json << inp.rdbuf();
+
+	Json::Reader reader;
+	Json::Value root;
+
+	if (!reader.parse(json.str(), root))
+		return EXIT_FAILURE;
+
+	CPointMap PointMap(root);
+
+	cout << PointMap.GetDistance(Point(0,0), 0) << endl;
+
+	return EXIT_SUCCESS;
+}
+
 int main(int argc, char *argv[]) {
-	return 0;
+	if (argc < 2) {
+		cerr << "Usage: " << argv[0] << " model_file" << endl;
+	}
+	return ParseAndRun(argv[1]);
 }
