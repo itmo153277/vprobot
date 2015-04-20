@@ -25,11 +25,13 @@
 using namespace ::Eigen;
 using namespace ::vprobot;
 using namespace ::vprobot::line;
+using namespace ::vprobot::map;
 using namespace ::vprobot::robot;
 
 /* CRobot */
 
-vprobot::robot::CRobot::CRobot(): m_State(0,0,0) {
+vprobot::robot::CRobot::CRobot(const Json::Value &RobotObject): m_State() {
+	m_State << RobotObject["x"].asDouble(), RobotObject["y"].asDouble(), RobotObject["angle"].asDouble();
 }
 
 vprobot::robot::CRobot::~CRobot() {
@@ -41,15 +43,67 @@ void vprobot::robot::CRobot::ExecuteCommand(const Control &Command) {
 	double angle = Command[0] * Command[1];
 
 	if (EqualsZero(Command[1])) { /* Бесконечный радиус поворота */
-		dx[0] = Command[0];
-		dx[1] = 0;
+		dx << Command[0], 0;
 	} else {
-		dx[0] = sin(angle) / Command[1];
-		dx[1] = (1 - cos(angle)) / Command[1];
+		dx << sin(angle) / Command[1], (1 - cos(angle)) / Command[1];
 	}
-	Point rdx = Rotate(dx, m_State[2]);
-	State ds;
+	m_State += MatrixConvert((State() << Rotate(dx, m_State[2]), angle));
+}
 
-	ds << rdx, angle;
-	m_State += ds;
+/* CRobotWithExactPosition */
+
+vprobot::robot::CRobotWithExactPosition::CRobotWithExactPosition(const Json::Value &RobotObject): CRobot(RobotObject), m_Measure() {
+}
+
+vprobot::robot::CRobotWithExactPosition::~CRobotWithExactPosition() {
+}
+
+/* Произвести измерения */
+const SMeasures &vprobot::robot::CRobotWithExactPosition::Measure() {
+	m_Measure.Value = m_State;
+	return m_Measure;
+}
+
+/* CRobotWithPointsPosition */
+
+vprobot::robot::CRobotWithPointsPosition::CRobotWithPointsPosition(const Json::Value &RobotObject, CMap &Map): CRobot(RobotObject), m_Measure(), m_Map(Map) {
+	m_Count = RobotObject["PointsCount"].asInt();
+	m_Measure.Value.resize(m_Count);
+}
+
+vprobot::robot::CRobotWithPointsPosition::~CRobotWithPointsPosition() {
+}
+
+/* Произвести измерения */
+const SMeasures &vprobot::robot::CRobotWithPointsPosition::Measure() {
+	size_t i;
+	Point r(m_State[0], m_State[1]);
+
+	for (i = 0; i < m_Count; i++) {
+		m_Measure.Value[i] = m_Map.GetDistance(r, i);
+	}
+	return m_Measure;
+}
+
+/* CRobotWithPointsPosition */
+
+vprobot::robot::CRobotWithScanner::CRobotWithScanner(const Json::Value &RobotObject, CMap &Map): CRobot(RobotObject), m_Measure(), m_Map(Map) {
+	m_Count = RobotObject["MeasuresCount"].asInt();
+	m_Measure.Value.resize(m_Count);
+	m_MaxAngle = RobotObject["MaxAngle"].asDouble();
+}
+
+vprobot::robot::CRobotWithScanner::~CRobotWithScanner() {
+}
+
+/* Произвести измерения */
+const SMeasures &vprobot::robot::CRobotWithScanner::Measure() {
+	size_t i;
+	double angle = m_State[2] - m_MaxAngle, da = m_MaxAngle * 2 / m_Count;
+	Point r(m_State[0], m_State[1]);
+
+	for (i = 0; i < m_Count; i++, angle += da) {
+		m_Measure.Value[i] = m_Map.GetDistance(r, angle);
+	}
+	return m_Measure;
 }

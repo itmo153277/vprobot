@@ -23,7 +23,10 @@
 #include "config.h"
 #endif
 
+#include <cstddef>
 #include <Eigen/Dense>
+#include <json/json.h>
+#include "map.h"
 
 namespace vprobot {
 
@@ -33,26 +36,96 @@ namespace robot {
 struct SMeasures {
 };
 
+/* Измеряем точное положение робота */
+struct SMeasuresExactPosition: public SMeasures {
+	Eigen::Vector3d Value;
+};
+
+/* Измеряем точное положение маяков */
+struct SMeasuresPointsPosition: public SMeasures {
+	Eigen::VectorXd Value;
+};
+
+/* Измеряем расстояние по направлениям */
+struct SMeasuresDistances: public SMeasures {
+	Eigen::VectorXd Value;
+};
+
 /* Тип для управления */
 typedef Eigen::Vector2d Control;
 
 /* Базовый класс робота */
 class CRobot {
 private:
-	CRobot(const CRobot &Robot) {}
+	CRobot(const CRobot &Robot) = default;
 protected:
 	/* Состояние робота */
 	typedef Eigen::Vector3d State;
 
 	State m_State;
 public:
-	CRobot();
+	CRobot(const Json::Value &RobotObject);
 	virtual ~CRobot();
 
 	/* Выполнить команду */
 	void ExecuteCommand(const Control &Command);
 	/* Произвести измерения */
-	virtual const SMeasures &Measure() const = 0;
+	virtual const SMeasures &Measure() = 0;
+};
+
+/* Робот, точно возвращающий позицию */
+class CRobotWithExactPosition: public CRobot {
+private:
+	CRobotWithExactPosition(const CRobotWithExactPosition &Robot) = default;
+
+	/* Измерение*/
+	SMeasuresExactPosition m_Measure;
+public:
+	CRobotWithExactPosition(const Json::Value &RobotObject);
+	~CRobotWithExactPosition();
+
+	/* Произвести измерения */
+	const SMeasures &Measure();
+};
+
+/* Робот, возвращающий позицию точек */
+class CRobotWithPointsPosition: public CRobot {
+private:
+	CRobotWithPointsPosition(const CRobotWithPointsPosition &Robot) = default;
+
+	/* Измерение*/
+	SMeasuresPointsPosition m_Measure;
+	/* Храним ссылку на карту */
+	::vprobot::map::CMap &m_Map;
+	/* Колличество измерений */
+	std::size_t m_Count;
+public:
+	CRobotWithPointsPosition(const Json::Value &RobotObject, ::vprobot::map::CMap &Map);
+	~CRobotWithPointsPosition();
+
+	/* Произвести измерения */
+	const SMeasures &Measure();
+};
+
+/* Робот, возвращающий расстояния до препятствий */
+class CRobotWithScanner: public CRobot {
+private:
+	CRobotWithScanner(const CRobotWithScanner &Robot) = default;
+
+	/* Измерение*/
+	SMeasuresDistances m_Measure;
+	/* Храним ссылку на карту */
+	::vprobot::map::CMap &m_Map;
+	/* Колличество измерений */
+	std::size_t m_Count;
+	/* Угол отклонения */
+	double m_MaxAngle;
+public:
+	CRobotWithScanner(const Json::Value &RobotObject, ::vprobot::map::CMap &Map);
+	~CRobotWithScanner();
+
+	/* Произвести измерения */
+	const SMeasures &Measure();
 };
 
 }

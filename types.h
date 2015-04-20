@@ -95,6 +95,11 @@ bool GreaterOrEquals(const T &x, const T &y) {
 	return GreaterOrEqualsZero(x - y);
 }
 
+/* Обход идиотских преудпрждений CDT */
+#ifndef MatrixConvert
+#define MatrixConvert(matrix) ((matrix).finished())
+#endif
+
 }
 
 #endif
