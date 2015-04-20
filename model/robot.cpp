@@ -48,6 +48,7 @@ void vprobot::robot::CRobot::ExecuteCommand(const Control &Command) {
 		dx << sin(angle) / Command[1], (1 - cos(angle)) / Command[1];
 	}
 	m_State += MatrixConvert((State() << Rotate(dx, m_State[2]), angle));
+	m_State[2] = CorrectAngle(m_State[2]);
 }
 
 /* CRobotWithExactPosition */

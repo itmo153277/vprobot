@@ -21,6 +21,8 @@
 
 namespace vprobot {
 
+const double PI = 3.14159265358979;
+
 const double ErrorDomain = 0.00001;
 
 /* Функции минимума, максиммума и модуля */
@@ -93,6 +95,16 @@ bool LessOrEquals(const T &x, const T &y) {
 template <typename T>
 bool GreaterOrEquals(const T &x, const T &y) {
 	return GreaterOrEqualsZero(x - y);
+}
+
+/* Проверка угла */
+template <typename T>
+T CorrectAngle(const T &angle) {
+	if (angle > PI)
+		return angle - 2 * PI;
+	else if (angle < -PI)
+		return angle + 2 * PI;
+	return angle;
 }
 
 /* Обход идиотских преудпрждений CDT */

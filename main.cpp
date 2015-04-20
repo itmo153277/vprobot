@@ -28,6 +28,7 @@
 #include "types.h"
 
 using namespace ::std;
+using namespace ::vprobot;
 using namespace ::vprobot::robot;
 
 int ParseAndRun(const char *in_file) {
@@ -50,7 +51,7 @@ int ParseAndRun(const char *in_file) {
 
 	Robot.ExecuteCommand(MatrixConvert((Control() << 1, 0)));
 	Robot.ExecuteCommand(MatrixConvert((Control() << 1, 0)));
-	Robot.ExecuteCommand(MatrixConvert((Control() << 3.14159265258979 / 2, 1)));
+	Robot.ExecuteCommand(MatrixConvert((Control() << PI / 2, 1)));
 	cout << static_cast<const SMeasuresExactPosition&>(Robot.Measure()).Value << endl;
 	return EXIT_SUCCESS;
 }
