@@ -23,6 +23,7 @@
 #include "config.h"
 #endif
 
+#include <cstddef>
 #include <vector>
 #include <Eigen/Dense>
 #include <json/json.h>
@@ -35,7 +36,7 @@ namespace map {
 /* Класс карты */
 class CMap {
 private:
-	CMap(const CMap &Map) {}
+	CMap(const CMap &Map) = default;
 public:
 	CMap() {}
 	virtual ~CMap() {}
@@ -43,7 +44,7 @@ public:
 	/* Произвести измерение из точки по направлению */
 	virtual double GetDistance(const line::Point &p, double angle) = 0;
 	/* Произвести измерение из точки до нужного маяка */
-	virtual double GetDistance(const line::Point &p, int index) = 0;
+	virtual double GetDistance(const line::Point &p, std::size_t index) = 0;
 };
 
 /* Карта, содержащая маяки */
@@ -54,7 +55,7 @@ private:
 	/* Содержание карты */
 	MapList m_List;
 
-	CPointMap(const CPointMap &Map) {}
+	CPointMap(const CPointMap &Map) = default;
 public:
 	CPointMap(const Json::Value &MapObject);
 	~CPointMap();
@@ -62,7 +63,7 @@ public:
 	/* Произвести измерение из точки по направлению */
 	double GetDistance(const line::Point &p, double angle);
 	/* Произвести измерение из точки до нужного маяка */
-	double GetDistance(const line::Point &p, int index);
+	double GetDistance(const line::Point &p, std::size_t  index);
 };
 
 /* Карта, содержащая линии */
@@ -73,7 +74,7 @@ private:
 	/* Содержание карты */
 	MapList m_List;
 
-	CLineMap(const CLineMap &Map) {}
+	CLineMap(const CLineMap &Map) = default;
 public:
 	CLineMap(const Json::Value &MapObject);
 	~CLineMap();
@@ -81,7 +82,7 @@ public:
 	/* Произвести измерение из точки по направлению */
 	double GetDistance(const line::Point &p, double angle);
 	/* Произвести измерение из точки до нужного маяка */
-	double GetDistance(const line::Point &p, int index);
+	double GetDistance(const line::Point &p, std::size_t index);
 };
 
 }

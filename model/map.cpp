@@ -30,12 +30,12 @@ using namespace ::vprobot::map;
 vprobot::map::CPointMap::CPointMap(const Json::Value &MapObject) {
 	if (MapObject.isArray()) {
 		/* Загружаем данные */
-		int i;
+		Json::ArrayIndex i;
 
 		for (i = 0; i < MapObject.size(); i++) {
-			const Json::Value p = MapObject[i];
+			const Json::Value &p = MapObject[i];
 
-			m_List.push_back(Point(p["x"].asDouble(), p["y"].asDouble()));
+			m_List.emplace_back(p["x"].asDouble(), p["y"].asDouble());
 		}
 	}
 }
@@ -50,7 +50,7 @@ double vprobot::map::CPointMap::GetDistance(const Point &p, double angle) {
 }
 
 /* Произвести измерение из точки до нужного маяка */
-double vprobot::map::CPointMap::GetDistance(const Point &p, int index) {
+double vprobot::map::CPointMap::GetDistance(const Point &p, size_t index) {
 	return (p - m_List[index]).norm();
 }
 
@@ -59,21 +59,21 @@ double vprobot::map::CPointMap::GetDistance(const Point &p, int index) {
 vprobot::map::CLineMap::CLineMap(const Json::Value &MapObject) {
 	if (MapObject.isArray()) {
 		/* Загружаем данные */
-		int i;
+		Json::ArrayIndex i;
 
 		for (i = 0; i < MapObject.size(); i++) {
-			const Json::Value l = MapObject[i];
+			const Json::Value &l = MapObject[i];
 
 			if (l.isArray()) {
 				MapList::reverse_iterator rl;
-				int j;
+				Json::ArrayIndex  j;
 
 				m_List.emplace_back();
 				rl = m_List.rbegin();
 				for (j = 0; j < l.size(); j++) {
-					const Json::Value p = l[j];
+					const Json::Value &p = l[j];
 
-					rl->push_back(Point(p["x"].asDouble(), p["y"].asDouble()));
+					rl->emplace_back(p["x"].asDouble(), p["y"].asDouble());
 				}
 			}
 		}
@@ -101,7 +101,7 @@ double vprobot::map::CLineMap::GetDistance(const Point &p, double angle) {
 }
 
 /* Произвести измерение из точки до нужного маяка */
-double vprobot::map::CLineMap::GetDistance(const Point &p, int index) {
+double vprobot::map::CLineMap::GetDistance(const Point &p, size_t index) {
 	/* Нет маяков, невозможно измерить */
 	return 0;
 }

@@ -24,14 +24,11 @@
 #include <cstdlib>
 #include <cerrno>
 
-#include "model/line.h"
-#include "model/map.h"
+#include "model/robot.h"
 #include "types.h"
 
 using namespace ::std;
-using namespace ::vprobot;
-using namespace ::vprobot::map;
-using namespace ::vprobot::line;
+using namespace ::vprobot::robot;
 
 int ParseAndRun(const char *in_file) {
 	std::ifstream inp(in_file);
@@ -49,10 +46,12 @@ int ParseAndRun(const char *in_file) {
 	if (!reader.parse(json.str(), root))
 		return EXIT_FAILURE;
 
-	CLineMap LineMap(root);
+	CRobotWithExactPosition Robot(root);
 
-	cout << LineMap.GetDistance(Point(0,0), 0.0) << endl;
-
+	Robot.ExecuteCommand(MatrixConvert((Control() << 1, 0)));
+	Robot.ExecuteCommand(MatrixConvert((Control() << 1, 0)));
+	Robot.ExecuteCommand(MatrixConvert((Control() << 3.14159265258979 / 2, 1)));
+	cout << static_cast<const SMeasuresExactPosition&>(Robot.Measure()).Value << endl;
 	return EXIT_SUCCESS;
 }
 
