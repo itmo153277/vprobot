@@ -53,22 +53,37 @@ struct SMeasuresDistances: public SMeasures {
 
 /* Тип для управления */
 typedef Eigen::Vector2d Control;
+/* Команды */
+enum ControlCommand {
+	Nothing = 0,
+	Forward,
+	ForwardRight,
+	ForwardLeft,
+	Backward,
+	BackwardRight,
+	BackwardLeft
+};
 
 /* Базовый класс робота */
 class CRobot {
 private:
 	CRobot(const CRobot &Robot) = default;
 protected:
-	/* Состояние робота */
 	typedef Eigen::Vector3d State;
 
+	/* Состояние робота */
 	State m_State;
+	/* Радиус поворота */
+	double m_Radius;
+	/* Длина перемещений */
+	double m_Length;
 public:
 	CRobot(const Json::Value &RobotObject);
 	virtual ~CRobot();
 
 	/* Выполнить команду */
 	void ExecuteCommand(const Control &Command);
+	void ExecuteCommand(const ControlCommand &Command);
 	/* Произвести измерения */
 	virtual const SMeasures &Measure() = 0;
 };

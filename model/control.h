@@ -23,6 +23,9 @@
 #include "config.h"
 #endif
 
+#include <cstddef>
+#include <vector>
+#include <json/json.h>
 #include "robot.h"
 
 namespace vprobot {
@@ -38,8 +41,29 @@ public:
 	virtual ~CControlSystem() = default;
 
 	/* Получить команду */
-	virtual const vprobot::robot::Control * const GetCommands(
-			const vprobot::robot::SMeasures * const Mesuarements) = 0;
+	virtual const vprobot::robot::ControlCommand * const GetCommands(
+			const vprobot::robot::SMeasures * const &Mesuarements) = 0;
+};
+
+/* Система управления, выполняющая заданную последовательность */
+class CSequentialControlSystem: public CControlSystem {
+private:
+	typedef std::vector<vprobot::robot::ControlCommand *> CommandSet;
+
+	/* Количество роботов */
+	std::size_t m_Count;
+	/* Набор команд */
+	CommandSet m_Set;
+	/* Текущая позиция в наборе */
+	CommandSet::iterator m_Pos;
+	CSequentialControlSystem(const CSequentialControlSystem &ControlSystem) = default;
+public:
+	CSequentialControlSystem(const Json::Value &ControlSystemObject);
+	~CSequentialControlSystem();
+
+	/* Получить команду */
+	const vprobot::robot::ControlCommand * const GetCommands(
+			const vprobot::robot::SMeasures * const &Mesuarements);
 };
 
 }

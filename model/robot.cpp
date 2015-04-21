@@ -33,6 +33,8 @@ using namespace ::vprobot::robot;
 vprobot::robot::CRobot::CRobot(const Json::Value &RobotObject) :
 		m_State() {
 	m_State << RobotObject["x"].asDouble(), RobotObject["y"].asDouble(), RobotObject["angle"].asDouble();
+	m_Radius = 1 / RobotObject["radius"].asDouble();
+	m_Length = RobotObject["len"].asDouble();
 }
 
 vprobot::robot::CRobot::~CRobot() {
@@ -50,6 +52,35 @@ void vprobot::robot::CRobot::ExecuteCommand(const Control &Command) {
 	}
 	m_State += MatrixConvert((State() << Rotate(dx, m_State[2]), angle));
 	m_State[2] = CorrectAngle(m_State[2]);
+}
+
+void vprobot::robot::CRobot::ExecuteCommand(const ControlCommand &Command) {
+	Control Cmd;
+
+	switch (Command) {
+	case Nothing:
+		Cmd << 0, 0;
+		break;
+	case Forward:
+		Cmd << m_Length, 0;
+		break;
+	case ForwardLeft:
+		Cmd << m_Length, m_Radius;
+		break;
+	case ForwardRight:
+		Cmd << m_Length, -m_Radius;
+		break;
+	case Backward:
+		Cmd << -m_Length, 0;
+		break;
+	case BackwardLeft:
+		Cmd << -m_Length, -m_Radius;
+		break;
+	case BackwardRight:
+		Cmd << -m_Length, m_Radius;
+		break;
+	}
+	ExecuteCommand(Cmd);
 }
 
 /* CRobotWithExactPosition */
@@ -73,7 +104,7 @@ const SMeasures &vprobot::robot::CRobotWithExactPosition::Measure() {
 vprobot::robot::CRobotWithPointsPosition::CRobotWithPointsPosition(
 		const Json::Value &RobotObject, CMap &Map) :
 		CRobot(RobotObject), m_Measure(), m_Map(Map) {
-	m_Count = RobotObject["PointsCount"].asInt();
+	m_Count = RobotObject["points_count"].asInt();
 	m_Measure.Value.resize(m_Count);
 }
 
@@ -96,9 +127,9 @@ const SMeasures &vprobot::robot::CRobotWithPointsPosition::Measure() {
 vprobot::robot::CRobotWithScanner::CRobotWithScanner(
 		const Json::Value &RobotObject, CMap &Map) :
 		CRobot(RobotObject), m_Measure(), m_Map(Map) {
-	m_Count = RobotObject["MeasuresCount"].asInt();
+	m_Count = RobotObject["measures_count"].asInt();
 	m_Measure.Value.resize(m_Count);
-	m_MaxAngle = RobotObject["MaxAngle"].asDouble();
+	m_MaxAngle = RobotObject["max_angle"].asDouble();
 }
 
 vprobot::robot::CRobotWithScanner::~CRobotWithScanner() {
