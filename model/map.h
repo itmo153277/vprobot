@@ -1,20 +1,20 @@
 /*
-    vprobot
-    Copyright (C) 2015 Ivanov Viktor
+ vprobot
+ Copyright (C) 2015 Ivanov Viktor
 
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
 
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #ifndef __MAP_H_
 #define __MAP_H_
@@ -38,8 +38,8 @@ class CMap {
 private:
 	CMap(const CMap &Map) = default;
 public:
-	CMap() {}
-	virtual ~CMap() {}
+	CMap() = default;
+	virtual ~CMap() = default;
 
 	/* Произвести измерение из точки по направлению */
 	virtual double GetDistance(const line::Point &p, double angle) = 0;
@@ -63,7 +63,7 @@ public:
 	/* Произвести измерение из точки по направлению */
 	double GetDistance(const line::Point &p, double angle);
 	/* Произвести измерение из точки до нужного маяка */
-	double GetDistance(const line::Point &p, std::size_t  index);
+	double GetDistance(const line::Point &p, std::size_t index);
 };
 
 /* Карта, содержащая линии */

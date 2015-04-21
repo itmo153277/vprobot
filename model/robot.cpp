@@ -1,20 +1,20 @@
 /*
-    vprobot
-    Copyright (C) 2015 Ivanov Viktor
+ vprobot
+ Copyright (C) 2015 Ivanov Viktor
 
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
 
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #include "robot.h"
 #include "line.h"
@@ -30,7 +30,8 @@ using namespace ::vprobot::robot;
 
 /* CRobot */
 
-vprobot::robot::CRobot::CRobot(const Json::Value &RobotObject): m_State() {
+vprobot::robot::CRobot::CRobot(const Json::Value &RobotObject) :
+		m_State() {
 	m_State << RobotObject["x"].asDouble(), RobotObject["y"].asDouble(), RobotObject["angle"].asDouble();
 }
 
@@ -53,7 +54,9 @@ void vprobot::robot::CRobot::ExecuteCommand(const Control &Command) {
 
 /* CRobotWithExactPosition */
 
-vprobot::robot::CRobotWithExactPosition::CRobotWithExactPosition(const Json::Value &RobotObject): CRobot(RobotObject), m_Measure() {
+vprobot::robot::CRobotWithExactPosition::CRobotWithExactPosition(
+		const Json::Value &RobotObject) :
+		CRobot(RobotObject), m_Measure() {
 }
 
 vprobot::robot::CRobotWithExactPosition::~CRobotWithExactPosition() {
@@ -67,7 +70,9 @@ const SMeasures &vprobot::robot::CRobotWithExactPosition::Measure() {
 
 /* CRobotWithPointsPosition */
 
-vprobot::robot::CRobotWithPointsPosition::CRobotWithPointsPosition(const Json::Value &RobotObject, CMap &Map): CRobot(RobotObject), m_Measure(), m_Map(Map) {
+vprobot::robot::CRobotWithPointsPosition::CRobotWithPointsPosition(
+		const Json::Value &RobotObject, CMap &Map) :
+		CRobot(RobotObject), m_Measure(), m_Map(Map) {
 	m_Count = RobotObject["PointsCount"].asInt();
 	m_Measure.Value.resize(m_Count);
 }
@@ -88,7 +93,9 @@ const SMeasures &vprobot::robot::CRobotWithPointsPosition::Measure() {
 
 /* CRobotWithPointsPosition */
 
-vprobot::robot::CRobotWithScanner::CRobotWithScanner(const Json::Value &RobotObject, CMap &Map): CRobot(RobotObject), m_Measure(), m_Map(Map) {
+vprobot::robot::CRobotWithScanner::CRobotWithScanner(
+		const Json::Value &RobotObject, CMap &Map) :
+		CRobot(RobotObject), m_Measure(), m_Map(Map) {
 	m_Count = RobotObject["MeasuresCount"].asInt();
 	m_Measure.Value.resize(m_Count);
 	m_MaxAngle = RobotObject["MaxAngle"].asDouble();
