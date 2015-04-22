@@ -74,10 +74,10 @@ void vprobot::robot::CRobot::ExecuteCommand(const ControlCommand &Command) {
 		Cmd << -m_Length, 0;
 		break;
 	case BackwardLeft:
-		Cmd << -m_Length, -m_Radius;
+		Cmd << -m_Length, m_Radius;
 		break;
 	case BackwardRight:
-		Cmd << -m_Length, m_Radius;
+		Cmd << -m_Length, -m_Radius;
 		break;
 	}
 	ExecuteCommand(Cmd);
