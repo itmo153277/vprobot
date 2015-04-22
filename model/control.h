@@ -42,7 +42,7 @@ public:
 
 	/* Получить команду */
 	virtual const vprobot::robot::ControlCommand * const GetCommands(
-			const vprobot::robot::SMeasures * const &Mesuarements) = 0;
+			const vprobot::robot::SMeasures * const *Mesuarements) = 0;
 };
 
 /* Система управления, выполняющая заданную последовательность */
@@ -63,7 +63,7 @@ public:
 
 	/* Получить команду */
 	const vprobot::robot::ControlCommand * const GetCommands(
-			const vprobot::robot::SMeasures * const &Mesuarements);
+			const vprobot::robot::SMeasures * const *Mesuarements);
 };
 
 }

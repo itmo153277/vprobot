@@ -100,7 +100,7 @@ am__v_AR_1 =
 libvprmodel_a_AR = $(AR) $(ARFLAGS)
 libvprmodel_a_LIBADD =
 am_libvprmodel_a_OBJECTS = control.$(OBJEXT) line.$(OBJEXT) \
-	map.$(OBJEXT) robot.$(OBJEXT)
+	map.$(OBJEXT) parser.$(OBJEXT) robot.$(OBJEXT)
 libvprmodel_a_OBJECTS = $(am_libvprmodel_a_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -269,8 +269,8 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 noinst_LIBRARIES = libvprmodel.a
-libvprmodel_a_SOURCES = control.cpp line.cpp map.cpp robot.cpp
-noinst_HEADERS = control.h line.h map.h robot.h
+libvprmodel_a_SOURCES = control.cpp line.cpp map.cpp parser.cpp robot.cpp
+noinst_HEADERS = control.h line.h map.h parser.h robot.h scene.h
 all: all-am
 
 .SUFFIXES:
@@ -323,6 +323,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/control.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/line.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/map.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/parser.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/robot.Po@am__quote@
 
 .cpp.o:

@@ -54,7 +54,7 @@ int ParseAndRun(const char *in_file) {
 	CSequentialControlSystem ControlSystem(root["control"]);
 	CRobotWithExactPosition Robot(root["robot"]);
 	const ControlCommand *c;
-	SMeasures *m = NULL;
+	SMeasures **m = NULL;
 
 	for (;;) {
 		c = ControlSystem.GetCommands(m);
