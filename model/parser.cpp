@@ -19,6 +19,8 @@
 #include "parser.h"
 
 #include <cstddef>
+#include <string>
+#include <functional>
 
 using namespace ::std;
 using namespace ::vprobot;
@@ -28,7 +30,68 @@ using namespace ::vprobot::control;
 using namespace ::vprobot::scene;
 
 CScene *vprobot::Scene(const Json::Value &SceneObject) {
-	return NULL;
+	CMap *Map = NULL;
+	CNormalScene::RobotSet Robots;
+	CControlSystem *ControlSystem = NULL;
+
+	string MapType(SceneObject["map_type"].asString());
+	string RobotType(SceneObject["robot_type"].asString());
+	string ControlSystemType(SceneObject["control_system_type"].asString());
+	size_t RobotsCount = SceneObject["robots_count"].asInt();
+
+	const int cMapTypes = 2;
+	static const char *MapAliases[cMapTypes] = { "Point", "Line" };
+	function<CMap *()> MapConstructers[cMapTypes] = {
+			[&]() {return new CPointMap(SceneObject["map"]);},
+			[&]() {return new CLineMap(SceneObject["map"]);} };
+	const int cRobotTypes = 3;
+	static const char *RobotAliases[cRobotTypes] = { "WithExactPosition",
+			"WithPointsPosition", "WithScanner" };
+	function<CRobot *()> RobotConstructors[cRobotTypes] =
+			{
+					[&]() {return new CRobotWithExactPosition(SceneObject["robot"]);},
+					[&]() {return new CRobotWithPointsPosition(SceneObject["robot"], *Map);},
+					[&]() {return new CRobotWithScanner(SceneObject["robot"], *Map);} };
+	const int cControlSystemsTypes = 1;
+	static const char *ControlSystemAliases[cControlSystemsTypes] = {
+			"Sequential" };
+	function<CControlSystem *()> ControlSystemConstructors[cControlSystemsTypes] =
+			{
+					[&]() {return new CSequentialControlSystem(SceneObject["control_system"]);} };
+
+	size_t i;
+	for (i = 0; i < cMapTypes; i++) {
+		if (MapType == MapAliases[i]) {
+			Map = MapConstructers[i]();
+			break;
+		}
+	}
+	if (Map == NULL)
+		return NULL;
+	for (i = 0; i < cRobotTypes; i++) {
+		if (RobotType == RobotAliases[i]) {
+			for (size_t j = RobotsCount; j > 0; j--)
+				Robots.push_back(RobotConstructors[i]());
+			break;
+		}
+	}
+	if (Robots.size() == 0) {
+		delete[] Map;
+		return NULL;
+	}
+	for (i = 0; i < cControlSystemsTypes; i++) {
+		if (ControlSystemType == ControlSystemAliases[i]) {
+			ControlSystem = ControlSystemConstructors[i]();
+			break;
+		}
+	}
+	if (ControlSystem == NULL) {
+		for (auto r : Robots)
+			delete r;
+		delete Map;
+		return NULL;
+	}
+	return new CNormalScene(Map, Robots, ControlSystem);
 }
 
 /* CNormalScene */
@@ -40,23 +103,28 @@ vprobot::scene::CNormalScene::CNormalScene(CMap *Map, RobotSet Robots,
 }
 
 vprobot::scene::CNormalScene::~CNormalScene() {
-	delete m_Measures;
 	delete m_ControlSystem;
-	for (auto r: m_Robots)
+	for (auto r : m_Robots)
 		delete r;
-	delete [] m_Map;
+	delete m_Map;
+	delete [] m_Measures;
 }
 
-void vprobot::scene::CNormalScene::Simulate() {
+bool vprobot::scene::CNormalScene::Simulate() {
 	size_t i;
 
 	for (i = 0; i < m_Robots.size(); i++) {
 		m_Measures[i] = &(m_Robots[i]->Measure());
 	}
 
-	const ControlCommand * const &cmd = m_ControlSystem->GetCommands(m_Measures);
+	const ControlCommand * const &cmd = m_ControlSystem->GetCommands(
+			m_Measures);
+
+	if (cmd == NULL)
+		return false;
 
 	for (i = 0; i < m_Robots.size(); i++) {
 		m_Robots[i]->ExecuteCommand(cmd[i]);
 	}
+	return true;
 }

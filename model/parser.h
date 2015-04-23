@@ -54,7 +54,7 @@ public:
 	~CNormalScene();
 
 	/* Выполнить симуляцию */
-	void Simulate();
+	bool Simulate();
 };
 
 }

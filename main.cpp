@@ -22,18 +22,14 @@
 #include <string>
 #include <json/json.h>
 #include <cstdlib>
-#include <Eigen/Dense>
 #include <cerrno>
 
-#include "model/control.h"
-#include "model/robot.h"
-#include "types.h"
+#include "model/scene.h"
+#include "model/parser.h"
 
 using namespace ::std;
-using namespace ::Eigen;
 using namespace ::vprobot;
-using namespace ::vprobot::control;
-using namespace ::vprobot::robot;
+using namespace ::vprobot::scene;
 
 int ParseAndRun(const char *in_file) {
 	std::ifstream inp(in_file);
@@ -51,21 +47,11 @@ int ParseAndRun(const char *in_file) {
 	if (!reader.parse(json.str(), root))
 		return EXIT_FAILURE;
 
-	CSequentialControlSystem ControlSystem(root["control"]);
-	CRobotWithExactPosition Robot(root["robot"]);
-	const ControlCommand *c;
-	SMeasures **m = NULL;
-
-	for (;;) {
-		c = ControlSystem.GetCommands(m);
-		if (c == NULL)
-			break;
-		Robot.ExecuteCommand(*c);
-		cout
-				<< static_cast<const SMeasuresExactPosition &>(Robot.Measure()).Value.block<
-						2, 1>(0, 0).transpose() << endl;
-	}
-	cout << "End point" << endl;
+	CScene *oScene = Scene(root);
+	if (oScene == NULL)
+		return EXIT_FAILURE;
+	while (oScene->Simulate());
+	delete oScene;
 	return EXIT_SUCCESS;
 }
 

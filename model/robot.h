@@ -24,9 +24,13 @@
 #endif
 
 #include <cstddef>
+#include <iostream>
 #include <Eigen/Dense>
 #include <json/json.h>
+#include "line.h"
 #include "map.h"
+
+#include "../types.h"
 
 namespace vprobot {
 
@@ -34,21 +38,47 @@ namespace robot {
 
 /* Базовый класс для измерений */
 struct SMeasures {
+	virtual ~SMeasures() = default;
+
+	/* Вывод значений */
+	virtual void PrintToStream(std::ostream &os) const {
+	}
 };
 
 /* Измеряем точное положение робота */
 struct SMeasuresExactPosition: public SMeasures {
 	Eigen::Vector3d Value;
+
+	/* Вывод значений */
+	void PrintToStream(std::ostream &os) const {
+		os << Value.transpose();
+	}
 };
 
 /* Измеряем точное положение маяков */
 struct SMeasuresPointsPosition: public SMeasures {
 	Eigen::VectorXd Value;
+
+	/* Вывод значений */
+	void PrintToStream(std::ostream &os) const {
+		os << Value;
+	}
 };
 
 /* Измеряем расстояние по направлениям */
 struct SMeasuresDistances: public SMeasures {
 	Eigen::VectorXd Value;
+
+	/* Вывод значений */
+	void PrintToStream(std::ostream &os) const {
+		int i;
+		double angle;
+		double ca = vprobot::PI / Value.rows();
+		for (i = 0, angle = 0; i < Value.rows(); i++, angle += ca) {
+			line::Point r = line::Rotate(MatrixConvert((line::Point() << Value[i], 0)), angle);
+			os << r.transpose() << std::endl;
+		}
+	}
 };
 
 /* Тип для управления */
@@ -136,6 +166,8 @@ private:
 	std::size_t m_Count;
 	/* Угол отклонения */
 	double m_MaxAngle;
+	/* Дальность */
+	double m_MaxLength;
 public:
 	CRobotWithScanner(const Json::Value &RobotObject,
 			::vprobot::map::CMap &Map);

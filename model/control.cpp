@@ -67,7 +67,7 @@ vprobot::control::CSequentialControlSystem::~CSequentialControlSystem() {
 }
 
 const ControlCommand * const vprobot::control::CSequentialControlSystem::GetCommands(
-		const vprobot::robot::SMeasures * const *Mesuarements) {
+		const vprobot::robot::SMeasures * const *Measurements) {
 	if (m_Pos == m_Set.end())
 		return NULL;
 	else {

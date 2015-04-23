@@ -130,6 +130,7 @@ vprobot::robot::CRobotWithScanner::CRobotWithScanner(
 	m_Count = RobotObject["measures_count"].asInt();
 	m_Measure.Value.resize(m_Count);
 	m_MaxAngle = RobotObject["max_angle"].asDouble();
+	m_MaxLength = RobotObject["max_length"].asDouble();
 }
 
 vprobot::robot::CRobotWithScanner::~CRobotWithScanner() {
@@ -142,7 +143,11 @@ const SMeasures &vprobot::robot::CRobotWithScanner::Measure() {
 	Point r(m_State[0], m_State[1]);
 
 	for (i = 0; i < m_Count; i++, angle += da) {
-		m_Measure.Value[i] = m_Map.GetDistance(r, angle);
+		double d = m_Map.GetDistance(r, angle);
+
+		if (d > m_MaxLength)
+			d = m_MaxLength;
+		m_Measure.Value[i] = d;
 	}
 	return m_Measure;
 }
