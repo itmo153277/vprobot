@@ -31,7 +31,7 @@ using namespace ::vprobot::robot;
 /* CRobot */
 
 vprobot::robot::CRobot::CRobot(const Json::Value &RobotObject) :
-		m_State() {
+		CPresentationProvider(RobotObject["presentations"]), m_State() {
 	m_State << RobotObject["x"].asDouble(), RobotObject["y"].asDouble(), RobotObject["angle"].asDouble();
 	m_Radius = 1 / RobotObject["radius"].asDouble();
 	m_Length = RobotObject["len"].asDouble();

@@ -23,12 +23,15 @@
 #include "config.h"
 #endif
 
+#include <json/json.h>
+#include "presentation.h"
+
 namespace vprobot {
 
 namespace scene {
 
 /* Класс сцены */
-class CScene {
+class CScene: public vprobot::presentation::CPresentationHandler {
 private:
 	CScene(const CScene &Scene) = default;
 public:

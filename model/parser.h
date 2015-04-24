@@ -25,6 +25,7 @@
 
 #include <vector>
 #include <json/json.h>
+#include "presentation.h"
 #include "scene.h"
 #include "map.h"
 #include "robot.h"
@@ -55,6 +56,9 @@ public:
 
 	/* Выполнить симуляцию */
 	bool Simulate();
+	/* Нарисовать презентацию */
+	void DrawPresentation(vprobot::presentation::CPresentationDriver &Driver,
+			const std::string &Name);
 };
 
 }

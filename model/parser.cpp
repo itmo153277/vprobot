@@ -70,8 +70,13 @@ CScene *vprobot::Scene(const Json::Value &SceneObject) {
 		return NULL;
 	for (i = 0; i < cRobotTypes; i++) {
 		if (RobotType == RobotAliases[i]) {
-			for (size_t j = RobotsCount; j > 0; j--)
-				Robots.push_back(RobotConstructors[i]());
+			for (size_t j = RobotsCount; j > 0; j--) {
+				CRobot *r = RobotConstructors[i]();
+
+				r->InitPresentations(
+						SceneObject["robot_presentations"][(Json::ArrayIndex) j]);
+				Robots.push_back(r);
+			}
 			break;
 		}
 	}
@@ -110,6 +115,7 @@ vprobot::scene::CNormalScene::~CNormalScene() {
 	delete[] m_Measures;
 }
 
+/* Выполнить симуляцию */
 bool vprobot::scene::CNormalScene::Simulate() {
 	size_t i;
 
@@ -127,4 +133,15 @@ bool vprobot::scene::CNormalScene::Simulate() {
 		m_Robots[i]->ExecuteCommand(cmd[i]);
 	}
 	return true;
+}
+
+/* Нарисовать презентацию */
+void vprobot::scene::CNormalScene::DrawPresentation(
+		vprobot::presentation::CPresentationDriver &Driver,
+		const std::string &Name) {
+	m_Map->UpdatePresentation(Driver, Name);
+	for (auto r : m_Robots) {
+		r->UpdatePresentation(Driver, Name);
+	}
+	m_ControlSystem->UpdatePresentation(Driver, Name);
 }

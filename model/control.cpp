@@ -28,7 +28,7 @@ using namespace ::vprobot::control;
 
 vprobot::control::CSequentialControlSystem::CSequentialControlSystem(
 		const Json::Value &ControlSystemObject) :
-		m_Set() {
+		CControlSystem(ControlSystemObject), m_Set() {
 	Json::ArrayIndex i;
 	const Json::Value Commands = ControlSystemObject["commands"];
 
@@ -40,11 +40,11 @@ vprobot::control::CSequentialControlSystem::CSequentialControlSystem(
 
 			for (j = 0; j < m_Count; j++) {
 				string CommandName(Commands[i][j].asString());
-				static const char Aliases[][7] = { "N", "F", "FL", "FR", "B",
-						"BL", "BR" };
-				static const ControlCommand AliasValues[7] = { Nothing, Forward,
+				static const char Aliases[][7] = {"N", "F", "FL", "FR", "B",
+						"BL", "BR"};
+				static const ControlCommand AliasValues[7] = {Nothing, Forward,
 						ForwardLeft, ForwardRight, Backward, BackwardLeft,
-						BackwardRight };
+						BackwardRight};
 				int k;
 
 				for (k = 0; k < 7; k++) {

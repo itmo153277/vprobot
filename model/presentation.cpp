@@ -24,7 +24,8 @@ using namespace ::vprobot::presentation;
 /* CPresentationProvider */
 
 vprobot::presentation::CPresentationProvider::CPresentationProvider(
-		const Json::Value &PresentationObject) {
+		const Json::Value &PresentationObject) :
+		m_DataSet() {
 	InitPresentations(PresentationObject);
 }
 
@@ -34,4 +35,22 @@ vprobot::presentation::CPresentationProvider::~CPresentationProvider() {
 /* Инициализация дополнительных данных */
 void vprobot::presentation::CPresentationProvider::InitPresentations(
 		const Json::Value &PresentationObject) {
+	Json::ArrayIndex i;
+
+	for (i = 0; i < PresentationObject.size(); i++) {
+		const Json::Value po = PresentationObject[i];
+
+		m_DataSet.emplace_back(ParsePresentation(po), po["name"].asString());
+	}
+}
+
+/* Нарисовать */
+void vprobot::presentation::CPresentationProvider::UpdatePresentation(
+		CPresentationDriver &Driver, const std::string &Name) {
+	for (auto d : m_DataSet) {
+		if (Name == d.Name) {
+			DrawPresentation(*d.Parameters, Driver);
+			break;
+		}
+	}
 }

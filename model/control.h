@@ -26,6 +26,7 @@
 #include <cstddef>
 #include <vector>
 #include <json/json.h>
+#include "presentation.h"
 #include "robot.h"
 
 namespace vprobot {
@@ -33,11 +34,13 @@ namespace vprobot {
 namespace control {
 
 /* Базовый класс системы управления */
-class CControlSystem {
+class CControlSystem: public vprobot::presentation::CPresentationProvider {
 private:
 	CControlSystem(const CControlSystem &ControlSystem) = default;
 public:
-	CControlSystem() = default;
+	CControlSystem(const Json::Value &ControlSystemObject) :
+			CPresentationProvider(ControlSystemObject["presentations"]) {
+	}
 	virtual ~CControlSystem() = default;
 
 	/* Получить команду */

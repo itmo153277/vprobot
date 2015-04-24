@@ -27,6 +27,7 @@
 #include <vector>
 #include <Eigen/Dense>
 #include <json/json.h>
+#include "presentation.h"
 #include "line.h"
 
 namespace vprobot {
@@ -34,11 +35,13 @@ namespace vprobot {
 namespace map {
 
 /* Класс карты */
-class CMap {
+class CMap: public vprobot::presentation::CPresentationProvider {
 private:
 	CMap(const CMap &Map) = default;
 public:
-	CMap() = default;
+	CMap(const Json::Value &MapObject) :
+			CPresentationProvider(MapObject["presentations"]) {
+	}
 	virtual ~CMap() = default;
 
 	/* Произвести измерение из точки по направлению */

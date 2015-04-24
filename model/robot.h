@@ -26,6 +26,7 @@
 #include <cstddef>
 #include <Eigen/Dense>
 #include <json/json.h>
+#include "presentation.h"
 #include "line.h"
 #include "map.h"
 
@@ -67,7 +68,7 @@ enum ControlCommand {
 };
 
 /* Базовый класс робота */
-class CRobot {
+class CRobot: public vprobot::presentation::CPresentationProvider {
 private:
 	CRobot(const CRobot &Robot) = default;
 protected:

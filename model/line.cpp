@@ -26,10 +26,8 @@ using namespace ::vprobot::line;
 
 /* Функция поворота точки на угол */
 Point vprobot::line::Rotate(const Point &r, double angle) {
-	Matrix2d T;
-
-	T << cos(angle), -sin(angle), sin(angle), cos(angle);
-	return T * r;
+	return (Matrix2d() << cos(angle), -sin(angle), sin(angle), cos(angle)).finished()
+			* r;
 }
 
 /* Функция для замера расстояния от центра до отрезка по направлению */

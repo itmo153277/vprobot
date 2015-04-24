@@ -47,7 +47,7 @@ int ParseAndRun(const char *in_file) {
 	if (!reader.parse(json.str(), root))
 		return EXIT_FAILURE;
 
-	CScene *oScene = Scene(root);
+	CScene *oScene = Scene(root["scene"]);
 	if (oScene == NULL)
 		return EXIT_FAILURE;
 	while (oScene->Simulate())

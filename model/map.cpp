@@ -27,16 +27,17 @@ using namespace ::vprobot::map;
 
 /* CPointMap */
 
-vprobot::map::CPointMap::CPointMap(const Json::Value &MapObject) {
-	if (MapObject.isArray()) {
-		/* Загружаем данные */
-		Json::ArrayIndex i;
+vprobot::map::CPointMap::CPointMap(const Json::Value &MapObject) :
+		CMap(MapObject) {
+	const Json::Value MapArray = MapObject["points"];
 
-		for (i = 0; i < MapObject.size(); i++) {
-			const Json::Value &p = MapObject[i];
+	/* Загружаем данные */
+	Json::ArrayIndex i;
 
-			m_List.emplace_back(p["x"].asDouble(), p["y"].asDouble());
-		}
+	for (i = 0; i < MapArray.size(); i++) {
+		const Json::Value &p = MapArray[i];
+
+		m_List.emplace_back(p["x"].asDouble(), p["y"].asDouble());
 	}
 }
 
@@ -56,25 +57,26 @@ double vprobot::map::CPointMap::GetDistance(const Point &p, size_t index) {
 
 /* CLineMap */
 
-vprobot::map::CLineMap::CLineMap(const Json::Value &MapObject) {
-	if (MapObject.isArray()) {
-		/* Загружаем данные */
-		Json::ArrayIndex i;
+vprobot::map::CLineMap::CLineMap(const Json::Value &MapObject) :
+		CMap(MapObject) {
+	const Json::Value MapArray = MapObject["lines"];
 
-		for (i = 0; i < MapObject.size(); i++) {
-			const Json::Value &l = MapObject[i];
+	/* Загружаем данные */
+	Json::ArrayIndex i;
 
-			if (l.isArray()) {
-				MapList::reverse_iterator rl;
-				Json::ArrayIndex j;
+	for (i = 0; i < MapArray.size(); i++) {
+		const Json::Value &l = MapArray[i];
 
-				m_List.emplace_back();
-				rl = m_List.rbegin();
-				for (j = 0; j < l.size(); j++) {
-					const Json::Value &p = l[j];
+		if (l.isArray()) {
+			MapList::reverse_iterator rl;
+			Json::ArrayIndex j;
 
-					rl->emplace_back(p["x"].asDouble(), p["y"].asDouble());
-				}
+			m_List.emplace_back();
+			rl = m_List.rbegin();
+			for (j = 0; j < l.size(); j++) {
+				const Json::Value &p = l[j];
+
+				rl->emplace_back(p["x"].asDouble(), p["y"].asDouble());
 			}
 		}
 	}
