@@ -271,6 +271,7 @@ top_srcdir = @top_srcdir@
 noinst_LIBRARIES = libvprui.a
 libvprui_a_SOURCES = 
 noinst_HEADERS = ui.h
+@SDL2_TRUE@libvprui_a_CXXFLAGS = @SDL2_CFLAGS@
 all: all-am
 
 .SUFFIXES:

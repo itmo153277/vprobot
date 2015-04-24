@@ -8,6 +8,7 @@ tester_LDADD = @CHECK_LIBS@ $(top_builddir)/model/libvprmodel.a $(top_builddir)/
 TEST_LOG_COMPILER = $(top_builddir)/test/tester
 
 if CHECK
+
 TESTS = $(TEST_FILES)
 check_PROGRAMS = tester
 

@@ -58,6 +58,7 @@ int ParseAndRun(const char *in_file) {
 int main(int argc, char *argv[]) {
 	if (argc < 2) {
 		cerr << "Usage: " << argv[0] << " model_file" << endl;
+		return EXIT_FAILURE;
 	}
 	return ParseAndRun(argv[1]);
 }
