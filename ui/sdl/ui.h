@@ -45,6 +45,10 @@ private:
 	SDL_Surface *m_Surface;
 	/* Рендерер */
 	SDL_Renderer *m_Renderer;
+	/* Текстура */
+	SDL_Texture *m_Texture;
+	/* Рендерер экрана */
+	SDL_Renderer *m_ScreenRenderer;
 	/* Место, куда будет записываться данные */
 	SDL_Rect m_Rect;
 
@@ -55,7 +59,8 @@ private:
 
 	CSDLPresentationDriver(const CSDLPresentationDriver &Driver) = default;
 public:
-	CSDLPresentationDriver(const Json::Value &ScreenObject);
+	CSDLPresentationDriver(const Json::Value &ScreenObject,
+			SDL_Renderer *ScreenRenderer);
 	~CSDLPresentationDriver();
 
 	/* Нарисовать точку */
@@ -66,7 +71,7 @@ public:
 	/* Нарисовать фигуру */
 	void DrawShape(double *x, double *y, int R, int G, int B);
 	/* Проецировать на экран */
-	void ProjectToSurface(SDL_Renderer *Renderer);
+	void ProjectToSurface();
 };
 
 /* Класс интерфейса пользователя */
@@ -76,8 +81,9 @@ private:
 	struct SScreen {
 		CSDLPresentationDriver Driver;
 		std::string Name;
-		SScreen(const Json::Value &ScreenObject) :
-				Driver(ScreenObject), Name(ScreenObject["name"].asString()) {
+		SScreen(const Json::Value &ScreenObject, SDL_Renderer *ScreenRenderer) :
+				Driver(ScreenObject, ScreenRenderer), Name(
+						ScreenObject["name"].asString()) {
 		}
 	private:
 		SScreen(const SScreen &Scren) = default;

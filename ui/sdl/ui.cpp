@@ -27,8 +27,9 @@ using namespace ::vprobot::ui;
 /* CSDLPresentationDriver */
 
 ::vprobot::ui::CSDLPresentationDriver::CSDLPresentationDriver(
-		const Json::Value &ScreenObject) :
-		m_Title(ScreenObject["title"].asString()), m_Rect() {
+		const Json::Value &ScreenObject, SDL_Renderer *ScreenRenderer) :
+		m_Title(ScreenObject["title"].asString()), m_ScreenRenderer(
+				ScreenRenderer), m_Rect() {
 	m_Rect.x = ScreenObject["x"].asInt();
 	m_Rect.y = ScreenObject["y"].asInt();
 	m_Rect.w = ScreenObject["width"].asInt();
@@ -38,10 +39,12 @@ using namespace ::vprobot::ui;
 	m_zoom = ScreenObject["zoom"].asDouble();
 	m_Surface = SDL_CreateRGBSurface(0, m_Rect.w, m_Rect.h, 32, 0, 0, 0, 0);
 	m_Renderer = SDL_CreateSoftwareRenderer(m_Surface);
+	m_Texture = SDL_CreateTextureFromSurface(m_ScreenRenderer, m_Surface);
 	Update();
 }
 
 ::vprobot::ui::CSDLPresentationDriver::~CSDLPresentationDriver() {
+	SDL_DestroyTexture(m_Texture);
 	SDL_DestroyRenderer(m_Renderer);
 	SDL_FreeSurface(m_Surface);
 }
@@ -79,13 +82,10 @@ void ::vprobot::ui::CSDLPresentationDriver::DrawShape(double *x, double *y,
 }
 
 /* Проецировать на экран */
-void ::vprobot::ui::CSDLPresentationDriver::ProjectToSurface(
-		SDL_Renderer *Renderer) {
-	SDL_Texture *i_Texture;
-
+void ::vprobot::ui::CSDLPresentationDriver::ProjectToSurface() {
 	SDL_RenderPresent(m_Renderer);
-	i_Texture = SDL_CreateTextureFromSurface(Renderer, m_Surface);
-	SDL_RenderCopy(Renderer, i_Texture, NULL, &m_Rect);
+	SDL_UpdateTexture(m_Texture, NULL, m_Surface->pixels, m_Surface->pitch);
+	SDL_RenderCopy(m_ScreenRenderer, m_Texture, NULL, &m_Rect);
 	Update();
 }
 
@@ -108,7 +108,7 @@ void ::vprobot::ui::CSDLPresentationDriver::ProjectToSurface(
 	const Json::Value Screens = PresentationObject["screens"];
 
 	for (i = 0; i < Screens.size(); i++) {
-		m_ScreensSet.emplace_back(new SScreen(Screens[i]));
+		m_ScreensSet.emplace_back(new SScreen(Screens[i], m_Renderer));
 	}
 
 	m_MutexDraw = SDL_CreateMutex();
@@ -173,7 +173,7 @@ bool ::vprobot::ui::CUI::Update() {
 	SDL_RenderClear(m_Renderer);
 	for (auto s : m_ScreensSet) {
 		m_Handler.DrawPresentation(s->Driver, s->Name);
-		s->Driver.ProjectToSurface(m_Renderer);
+		s->Driver.ProjectToSurface();
 	}
 	SDL_RenderPresent(m_Renderer);
 	if (m_Delay == 0) {
