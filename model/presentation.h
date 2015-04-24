@@ -23,9 +23,55 @@
 #include "config.h"
 #endif
 
-namespace vpobot {
+#include <string>
+#include <vector>
+#include <json/json.h>
+
+namespace vprobot {
 
 namespace presentation {
+
+/* Интерфейс для отрисовки данных */
+class CPresentationDriver {
+private:
+	CPresentationDriver(const CPresentationDriver &Driver) = default;
+public:
+	CPresentationDriver() = default;
+	virtual ~CPresentationDriver() = default;
+
+	/* Нарисовать точку */
+	virtual void DrawPoint(double x, double y, int Colour) = 0;
+	/* Нарисовать элипс */
+	virtual void DrawEllipse(double x, double y, double a, double b,
+			double angle, int Colour) = 0;
+	/* Нарисовать фигуру */
+	virtual void DrawShape(double *x, double *y, int Colour) = 0;
+
+};
+
+/* Интерфейс для классов с данными */
+struct SPresentationParameters {
+	virtual ~SPresentationParameters() = default;
+};
+
+/* Класс для провайдера */
+class CPresentationProvider {
+private:
+	CPresentationProvider(const CPresentationProvider &Provider) = default;
+protected:
+	/* Парсинг параметров для экрана */
+	virtual SPresentationParameters *ParsePresentation(
+			const Json::Value &PresentationObject) = 0;
+	/* Отображаем данные */
+	virtual void DrawPresentation(const SPresentationParameters &Params,
+			CPresentationDriver &Driver) = 0;
+public:
+	CPresentationProvider(const Json::Value &PresentationObject);
+	virtual ~CPresentationProvider();
+
+	/* Инициализация дополнительных данных */
+	void InitPresentations(const Json::Value &PresentationObject);
+};
 
 }
 

@@ -17,3 +17,21 @@
  */
 
 #include "presentation.h"
+
+using namespace ::std;
+using namespace ::vprobot::presentation;
+
+/* CPresentationProvider */
+
+vprobot::presentation::CPresentationProvider::CPresentationProvider(
+		const Json::Value &PresentationObject) {
+	InitPresentations(PresentationObject);
+}
+
+vprobot::presentation::CPresentationProvider::~CPresentationProvider() {
+}
+
+/* Инициализация дополнительных данных */
+void vprobot::presentation::CPresentationProvider::InitPresentations(
+		const Json::Value &PresentationObject) {
+}
