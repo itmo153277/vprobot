@@ -66,18 +66,15 @@ vprobot::map::CLineMap::CLineMap(const Json::Value &MapObject) :
 
 	for (i = 0; i < MapArray.size(); i++) {
 		const Json::Value &l = MapArray[i];
+		MapList::reverse_iterator rl;
+		Json::ArrayIndex j;
 
-		if (l.isArray()) {
-			MapList::reverse_iterator rl;
-			Json::ArrayIndex j;
+		m_List.emplace_back();
+		rl = m_List.rbegin();
+		for (j = 0; j < l.size(); j++) {
+			const Json::Value &p = l[j];
 
-			m_List.emplace_back();
-			rl = m_List.rbegin();
-			for (j = 0; j < l.size(); j++) {
-				const Json::Value &p = l[j];
-
-				rl->emplace_back(p["x"].asDouble(), p["y"].asDouble());
-			}
+			rl->emplace_back(p["x"].asDouble(), p["y"].asDouble());
 		}
 	}
 }

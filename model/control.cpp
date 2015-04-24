@@ -20,7 +20,7 @@
 
 #include <string>
 
-using namespace std;
+using namespace ::std;
 using namespace ::vprobot::robot;
 using namespace ::vprobot::control;
 
@@ -33,29 +33,27 @@ vprobot::control::CSequentialControlSystem::CSequentialControlSystem(
 	const Json::Value Commands = ControlSystemObject["commands"];
 
 	m_Count = ControlSystemObject["count"].asInt();
-	if (Commands.isArray()) {
-		for (i = 0; i < Commands.size(); i++) {
-			ControlCommand *cmd = new ControlCommand[m_Count];
-			Json::ArrayIndex j;
+	for (i = 0; i < Commands.size(); i++) {
+		ControlCommand *cmd = new ControlCommand[m_Count];
+		Json::ArrayIndex j;
 
-			for (j = 0; j < m_Count; j++) {
-				string CommandName(Commands[i][j].asString());
-				static const char Aliases[][7] = {"N", "F", "FL", "FR", "B",
-						"BL", "BR"};
-				static const ControlCommand AliasValues[7] = {Nothing, Forward,
-						ForwardLeft, ForwardRight, Backward, BackwardLeft,
-						BackwardRight};
-				int k;
+		for (j = 0; j < m_Count; j++) {
+			string CommandName(Commands[i][j].asString());
+			static const char Aliases[][7] = {"N", "F", "FL", "FR", "B", "BL",
+					"BR"};
+			static const ControlCommand AliasValues[7] = {Nothing, Forward,
+					ForwardLeft, ForwardRight, Backward, BackwardLeft,
+					BackwardRight};
+			int k;
 
-				for (k = 0; k < 7; k++) {
-					if (CommandName != Aliases[k])
-						continue;
-					cmd[j] = AliasValues[k];
-					break;
-				}
+			for (k = 0; k < 7; k++) {
+				if (CommandName != Aliases[k])
+					continue;
+				cmd[j] = AliasValues[k];
+				break;
 			}
-			m_Set.push_back(cmd);
 		}
+		m_Set.push_back(cmd);
 	}
 	m_Pos = m_Set.begin();
 }
