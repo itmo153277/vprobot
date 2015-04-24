@@ -107,11 +107,6 @@ T CorrectAngle(const T &angle) {
 	return angle;
 }
 
-/* Обход идиотских преудпрждений CDT */
-#ifndef MatrixConvert
-#define MatrixConvert(matrix) ((matrix).finished())
-#endif
-
 }
 
 #endif

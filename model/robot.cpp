@@ -50,7 +50,7 @@ void vprobot::robot::CRobot::ExecuteCommand(const Control &Command) {
 	} else {
 		dx << sin(angle) / Command[1], (1 - cos(angle)) / Command[1];
 	}
-	m_State += MatrixConvert((State() << Rotate(dx, m_State[2]), angle));
+	m_State += (State() << Rotate(dx, m_State[2]), angle).finished();
 	m_State[2] = CorrectAngle(m_State[2]);
 }
 
@@ -58,27 +58,27 @@ void vprobot::robot::CRobot::ExecuteCommand(const ControlCommand &Command) {
 	Control Cmd;
 
 	switch (Command) {
-	case Nothing:
-		Cmd << 0, 0;
-		break;
-	case Forward:
-		Cmd << m_Length, 0;
-		break;
-	case ForwardLeft:
-		Cmd << m_Length, m_Radius;
-		break;
-	case ForwardRight:
-		Cmd << m_Length, -m_Radius;
-		break;
-	case Backward:
-		Cmd << -m_Length, 0;
-		break;
-	case BackwardLeft:
-		Cmd << -m_Length, m_Radius;
-		break;
-	case BackwardRight:
-		Cmd << -m_Length, -m_Radius;
-		break;
+		case Nothing:
+			Cmd << 0, 0;
+			break;
+		case Forward:
+			Cmd << m_Length, 0;
+			break;
+		case ForwardLeft:
+			Cmd << m_Length, m_Radius;
+			break;
+		case ForwardRight:
+			Cmd << m_Length, -m_Radius;
+			break;
+		case Backward:
+			Cmd << -m_Length, 0;
+			break;
+		case BackwardLeft:
+			Cmd << -m_Length, m_Radius;
+			break;
+		case BackwardRight:
+			Cmd << -m_Length, -m_Radius;
+			break;
 	}
 	ExecuteCommand(Cmd);
 }

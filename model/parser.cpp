@@ -40,24 +40,24 @@ CScene *vprobot::Scene(const Json::Value &SceneObject) {
 	size_t RobotsCount = SceneObject["robots_count"].asInt();
 
 	const int cMapTypes = 2;
-	static const char *MapAliases[cMapTypes] = { "Point", "Line" };
-	function<CMap *()> MapConstructers[cMapTypes] = {
+	static const char *MapAliases[cMapTypes] = {"Point", "Line"};
+	std::function<CMap *()> MapConstructers[cMapTypes] = {
 			[&]() {return new CPointMap(SceneObject["map"]);},
-			[&]() {return new CLineMap(SceneObject["map"]);} };
+			[&]() {return new CLineMap(SceneObject["map"]);}};
 	const int cRobotTypes = 3;
-	static const char *RobotAliases[cRobotTypes] = { "WithExactPosition",
-			"WithPointsPosition", "WithScanner" };
+	static const char *RobotAliases[cRobotTypes] = {"WithExactPosition",
+			"WithPointsPosition", "WithScanner"};
 	function<CRobot *()> RobotConstructors[cRobotTypes] =
 			{
 					[&]() {return new CRobotWithExactPosition(SceneObject["robot"]);},
 					[&]() {return new CRobotWithPointsPosition(SceneObject["robot"], *Map);},
-					[&]() {return new CRobotWithScanner(SceneObject["robot"], *Map);} };
+					[&]() {return new CRobotWithScanner(SceneObject["robot"], *Map);}};
 	const int cControlSystemsTypes = 1;
 	static const char *ControlSystemAliases[cControlSystemsTypes] = {
-			"Sequential" };
+			"Sequential"};
 	function<CControlSystem *()> ControlSystemConstructors[cControlSystemsTypes] =
 			{
-					[&]() {return new CSequentialControlSystem(SceneObject["control_system"]);} };
+					[&]() {return new CSequentialControlSystem(SceneObject["control_system"]);}};
 
 	size_t i;
 	for (i = 0; i < cMapTypes; i++) {
@@ -107,7 +107,7 @@ vprobot::scene::CNormalScene::~CNormalScene() {
 	for (auto r : m_Robots)
 		delete r;
 	delete m_Map;
-	delete [] m_Measures;
+	delete[] m_Measures;
 }
 
 bool vprobot::scene::CNormalScene::Simulate() {
