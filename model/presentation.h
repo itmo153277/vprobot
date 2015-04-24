@@ -40,12 +40,12 @@ public:
 	virtual ~CPresentationDriver() = default;
 
 	/* Нарисовать точку */
-	virtual void DrawPoint(double x, double y, int Colour) = 0;
+	virtual void DrawPoint(double x, double y, int R, int G, int B) = 0;
 	/* Нарисовать элипс */
 	virtual void DrawEllipse(double x, double y, double a, double b,
-			double angle, int Colour) = 0;
+			double angle, int R, int G, int B) = 0;
 	/* Нарисовать фигуру */
-	virtual void DrawShape(double *x, double *y, int Colour) = 0;
+	virtual void DrawShape(double *x, double *y, int R, int G, int B) = 0;
 
 };
 

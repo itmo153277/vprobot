@@ -23,6 +23,8 @@
 #include "config.h"
 #endif
 
+#include <string>
+#include <vector>
 #include <SDL2/SDL.h>
 #include <json/json.h>
 #include "../../model/presentation.h"
@@ -31,15 +33,65 @@ namespace vprobot {
 
 namespace ui {
 
+/* Класс драйвера для презентации */
+class CSDLPresentationDriver: public vprobot::presentation::CPresentationDriver {
+private:
+	/* Данные об экране */
+	double m_ofsx;
+	double m_ofsy;
+	double m_zoom;
+	std::string m_Title;
+	/* Внутреняя поверхность */
+	SDL_Surface *m_Surface;
+	/* Рендерер */
+	SDL_Renderer *m_Renderer;
+	/* Место, куда будет записываться данные */
+	SDL_Rect m_Rect;
+
+	/* Функция для преобразования координат */
+	void TranslateCoord(double x, double y, int &d_x, int &d_y);
+	/* Обновить экран */
+	void Update();
+
+	CSDLPresentationDriver(const CSDLPresentationDriver &Driver) = default;
+public:
+	CSDLPresentationDriver(const Json::Value &ScreenObject);
+	~CSDLPresentationDriver();
+
+	/* Нарисовать точку */
+	void DrawPoint(double x, double y, int R, int G, int B);
+	/* Нарисовать элипс */
+	void DrawEllipse(double x, double y, double a, double b, double angle,
+			int R, int G, int B);
+	/* Нарисовать фигуру */
+	void DrawShape(double *x, double *y, int R, int G, int B);
+	/* Проецировать на экран */
+	void ProjectToSurface(SDL_Renderer *Renderer);
+};
+
 /* Класс интерфейса пользователя */
 class CUI {
 private:
+	/* Структура для экрана */
+	struct SScreen {
+		CSDLPresentationDriver Driver;
+		std::string Name;
+		SScreen(const Json::Value &ScreenObject) :
+				Driver(ScreenObject), Name(ScreenObject["name"].asString()) {
+		}
+	private:
+		SScreen(const SScreen &Scren) = default;
+	};
+	typedef std::vector<SScreen *> ScreensSet;
+
 	/* Ссылка на обработчик презентаций */
-	const vprobot::presentation::CPresentationHandler &m_Handler;
+	vprobot::presentation::CPresentationHandler &m_Handler;
+	/* Внутренние экраны */
+	ScreensSet m_ScreensSet;
 	/* Окно */
 	SDL_Window *m_Window;
 	/* Поверхность окна */
-	SDL_Surface *m_Surface;
+	SDL_Renderer *m_Renderer;
 	/* Поток обработки сообщений */
 	SDL_Thread *m_Thread;
 	/* Мьютекс для обновления экрана */
@@ -57,7 +109,7 @@ private:
 
 	CUI(const CUI &UI) = default;
 public:
-	CUI(const vprobot::presentation::CPresentationHandler &Handler,
+	CUI(vprobot::presentation::CPresentationHandler &Handler,
 			const Json::Value &PresentationObject);
 	~CUI();
 
