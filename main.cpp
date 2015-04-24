@@ -50,7 +50,8 @@ int ParseAndRun(const char *in_file) {
 	CScene *oScene = Scene(root);
 	if (oScene == NULL)
 		return EXIT_FAILURE;
-	while (oScene->Simulate());
+	while (oScene->Simulate())
+		;
 	delete oScene;
 	return EXIT_SUCCESS;
 }

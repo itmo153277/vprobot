@@ -1,20 +1,20 @@
 /*
-    vprobot
-    Copyright (C) 2015 Ivanov Viktor
+ vprobot
+ Copyright (C) 2015 Ivanov Viktor
 
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
 
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #include <string>
 #include <iostream>
@@ -30,51 +30,47 @@
 
 Json::Value data;
 
-START_TEST(json_array_check) {
-	int arrayLen = 0,
-		nullCount = 0,
-		stringCount = 0,
-		objectCount = 0,
-		intCount = 0,
-		doubleCount = 0,
-		arrayTarget = data["arrayLength"].asInt(),
-		nullCountTarget = data["nullCount"].asInt(),
-		stringCountTarget = data["stringCount"].asInt(),
-		objectCountTarget = data["objectCount"].asInt(),
-		intCountTarget = data["intCount"].asInt(),
-		doubleCountTarget = data["doubleCount"].asInt(),
-		i;
-	const Json::Value arrayData = data["arrayData"];
-	for (i = 0; i < arrayData.size(); i++) {
-		const Json::Value arrayItem = arrayData[i];
+START_TEST(json_array_check)
+	{
+		int arrayLen = 0, nullCount = 0, stringCount = 0, objectCount = 0,
+				intCount = 0, doubleCount = 0, arrayTarget =
+						data["arrayLength"].asInt(), nullCountTarget =
+						data["nullCount"].asInt(), stringCountTarget =
+						data["stringCount"].asInt(), objectCountTarget =
+						data["objectCount"].asInt(), intCountTarget =
+						data["intCount"].asInt(), doubleCountTarget =
+						data["doubleCount"].asInt();
+		Json::ArrayIndex i;
+		const Json::Value arrayData = data["arrayData"];
+		for (i = 0; i < arrayData.size(); i++) {
+			const Json::Value arrayItem = arrayData[i];
 
-		arrayLen++;
-		if (arrayItem.isNull())
-			nullCount++;
-		else if (arrayItem.isString())
-			stringCount++;
-		else if (arrayItem.isObject())
-			objectCount++;
-		else if (arrayItem.isInt())
-			intCount++;
-		else if (arrayItem.isDouble())
-			doubleCount++;
-	}
-	ck_assert_int_eq(arrayLen, arrayTarget);
-	ck_assert_int_eq(nullCount, nullCountTarget);
-	ck_assert_int_eq(stringCount, stringCountTarget);
-	ck_assert_int_eq(objectCount, objectCountTarget);
-	ck_assert_int_eq(intCount, intCountTarget);
-	ck_assert_int_eq(doubleCount, doubleCountTarget);
-}
-END_TEST
+			arrayLen++;
+			if (arrayItem.isNull())
+				nullCount++;
+			else if (arrayItem.isString())
+				stringCount++;
+			else if (arrayItem.isObject())
+				objectCount++;
+			else if (arrayItem.isInt())
+				intCount++;
+			else if (arrayItem.isDouble())
+				doubleCount++;
+		}
+		ck_assert_int_eq(arrayLen, arrayTarget);
+		ck_assert_int_eq(nullCount, nullCountTarget);
+		ck_assert_int_eq(stringCount, stringCountTarget);
+		ck_assert_int_eq(objectCount, objectCountTarget);
+		ck_assert_int_eq(intCount, intCountTarget);
+		ck_assert_int_eq(doubleCount, doubleCountTarget);
+	}END_TEST
 
-START_TEST(json_tree_check) {
-	int targetCode = data["targetCode"].asInt(),
-		resultCode = data["arrayData"][4]["resultCode"].asInt();
-	ck_assert_int_eq(targetCode, resultCode);
-}
-END_TEST
+START_TEST(json_tree_check)
+	{
+		int targetCode = data["targetCode"].asInt(), resultCode =
+				data["arrayData"][4]["resultCode"].asInt();
+		ck_assert_int_eq(targetCode, resultCode);
+	}END_TEST
 
 Suite *RobotTests(const char *in_file) {
 	std::ifstream inp(in_file);
