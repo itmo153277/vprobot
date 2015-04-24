@@ -16,17 +16,11 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __UI_H_
-#define __UI_H_
+#ifndef __CLI_UI_H_
+#define __CLI_UI_H_
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
-
-#ifdef HAVE_SDL
-#include "sdl/ui.h"
-#else
-#include "cli/ui.h"
 #endif
 
 #endif

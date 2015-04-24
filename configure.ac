@@ -1,7 +1,7 @@
 AC_PREREQ([2.69])
 AC_INIT([vprobot], [0.1], [viktprog@gmail.com])
 AC_CONFIG_MACRO_DIR([m4])
-AM_INIT_AUTOMAKE([-Wall -Werror])
+AM_INIT_AUTOMAKE([-Wall -Werror subdir-objects])
 AC_CONFIG_HEADERS([config.h])
 
 AC_COPYRIGHT([Copyright (c) 2015 Ivanov Viktor])
@@ -59,6 +59,7 @@ can_use_sdl2="yes"
 AC_ARG_WITH(sdl2, AS_HELP_STRING([--with-sdl2], [use sdl2 for ui [default=yes]]), [can_use_sdl2=$withval])
 if test "x$can_use_sdl2" = "xyes" ; then
 	PKG_CHECK_MODULES([SDL2], [sdl2 >= 2.0.0], [], [can_use_sdl2="no"])
+	SDL2_LIBS="$SDL2_LIBS -lSDL2_gfx"
 	if test "x$can_use_sdl2" = "xyes" ; then
 		AC_LANG_PUSH([C])
 		LIBS_SAVE=$LIBS
@@ -77,6 +78,8 @@ if test "x$can_use_sdl2" = "xyes" ; then
 	fi
 	if test "x$can_use_sdl2" = "xno" ; then
 		AC_MSG_WARN([Couldn't find SDL2; cli will be used instead])
+	else
+		AC_DEFINE([HAVE_SDL], 1, [Define to 1 to enable SDL])
 	fi
 fi
 AM_CONDITIONAL([SDL2], [test "x$can_use_sdl2" = "xyes"])

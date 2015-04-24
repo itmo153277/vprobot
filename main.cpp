@@ -26,10 +26,12 @@
 
 #include "model/scene.h"
 #include "model/parser.h"
+#include "ui/ui.h"
 
 using namespace ::std;
 using namespace ::vprobot;
 using namespace ::vprobot::scene;
+using namespace ::vprobot::ui;
 
 int ParseAndRun(const char *in_file) {
 	std::ifstream inp(in_file);
@@ -48,9 +50,13 @@ int ParseAndRun(const char *in_file) {
 		return EXIT_FAILURE;
 
 	CScene *oScene = Scene(root["scene"]);
+
 	if (oScene == NULL)
 		return EXIT_FAILURE;
-	while (oScene->Simulate())
+
+	CUI UI(*oScene, root["presentation"]);
+
+	while (oScene->Simulate() && UI.Update())
 		;
 	delete oScene;
 	return EXIT_SUCCESS;

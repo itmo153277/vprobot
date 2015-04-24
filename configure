@@ -5183,6 +5183,7 @@ else
 $as_echo "yes" >&6; }
 
 fi
+	SDL2_LIBS="$SDL2_LIBS -lSDL2_gfx"
 	if test "x$can_use_sdl2" = "xyes" ; then
 		ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
@@ -5623,6 +5624,10 @@ ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
 	if test "x$can_use_sdl2" = "xno" ; then
 		{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Couldn't find SDL2; cli will be used instead" >&5
 $as_echo "$as_me: WARNING: Couldn't find SDL2; cli will be used instead" >&2;}
+	else
+
+$as_echo "#define HAVE_SDL 1" >>confdefs.h
+
 	fi
 fi
  if test "x$can_use_sdl2" = "xyes"; then

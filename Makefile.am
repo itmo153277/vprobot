@@ -6,7 +6,7 @@ noinst_HEADERS = types.h
 
 if SDL2
 
-vprobot_LDADD = @SDL2_LIBS@ model/libvprmodel.a ui/libvprui.a
+vprobot_LDADD = model/libvprmodel.a ui/libvprui.a @SDL2_LIBS@
 vprobot_CXXFLAGS = @SDL2_CFLAGS@
 
 else

@@ -9,6 +9,9 @@
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
 
+/* Define to 1 to enable SDL */
+#undef HAVE_SDL
+
 /* Define to 1 if you have the <SDL2/SDL2_framerate.h> header file. */
 #undef HAVE_SDL2_SDL2_FRAMERATE_H
 
