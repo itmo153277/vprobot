@@ -30,6 +30,9 @@ vprobot::presentation::CPresentationProvider::CPresentationProvider(
 }
 
 vprobot::presentation::CPresentationProvider::~CPresentationProvider() {
+	for (auto p: m_DataSet) {
+		delete p.Parameters;
+	}
 }
 
 /* Инициализация дополнительных данных */

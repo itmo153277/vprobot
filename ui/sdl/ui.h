@@ -47,20 +47,18 @@ private:
 	SDL_Renderer *m_Renderer;
 	/* Текстура */
 	SDL_Texture *m_Texture;
-	/* Рендерер экрана */
-	SDL_Renderer *m_ScreenRenderer;
 	/* Место, куда будет записываться данные */
 	SDL_Rect m_Rect;
 
 	/* Функция для преобразования координат */
-	void TranslateCoord(double x, double y, int &d_x, int &d_y);
+	void TranslateCoord(double x, double y, Sint16 &d_x, Sint16 &d_y);
 	/* Обновить экран */
 	void Update();
 
 	CSDLPresentationDriver(const CSDLPresentationDriver &Driver) = default;
 public:
 	CSDLPresentationDriver(const Json::Value &ScreenObject,
-			SDL_Renderer *ScreenRenderer);
+			SDL_Renderer *Renderer);
 	~CSDLPresentationDriver();
 
 	/* Нарисовать точку */
@@ -69,7 +67,7 @@ public:
 	void DrawEllipse(double x, double y, double a, double b, double angle,
 			int R, int G, int B);
 	/* Нарисовать фигуру */
-	void DrawShape(double *x, double *y, int R, int G, int B);
+	void DrawShape(double *x, double *y, int count, int R, int G, int B);
 	/* Проецировать на экран */
 	void ProjectToSurface();
 };
