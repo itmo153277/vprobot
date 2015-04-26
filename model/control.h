@@ -38,9 +38,7 @@ class CControlSystem: public vprobot::presentation::CPresentationProvider {
 private:
 	CControlSystem(const CControlSystem &ControlSystem) = default;
 public:
-	CControlSystem(const Json::Value &ControlSystemObject) :
-			CPresentationProvider(ControlSystemObject["presentations"]) {
-	}
+	CControlSystem() = default;
 	virtual ~CControlSystem() = default;
 
 	/* Получить команду */

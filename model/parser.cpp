@@ -64,6 +64,7 @@ CScene *vprobot::Scene(const Json::Value &SceneObject) {
 	for (i = 0; i < cMapTypes; i++) {
 		if (MapType == MapAliases[i]) {
 			Map = MapConstructers[i]();
+			Map->InitPresentations(SceneObject["map"]["presentations"]);
 			break;
 		}
 	}
@@ -74,6 +75,7 @@ CScene *vprobot::Scene(const Json::Value &SceneObject) {
 			for (size_t j = RobotsCount; j > 0; j--) {
 				CRobot *r = RobotConstructors[i]();
 
+				r->InitPresentations(SceneObject["robot"]["presentations"]);
 				r->InitPresentations(
 						SceneObject["robot_presentations"][(Json::ArrayIndex) j
 								- 1]);
@@ -89,6 +91,8 @@ CScene *vprobot::Scene(const Json::Value &SceneObject) {
 	for (i = 0; i < cControlSystemsTypes; i++) {
 		if (ControlSystemType == ControlSystemAliases[i]) {
 			ControlSystem = ControlSystemConstructors[i]();
+			ControlSystem->InitPresentations(
+					SceneObject["control_system"]["presentations"]);
 			break;
 		}
 	}

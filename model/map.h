@@ -39,9 +39,7 @@ class CMap: public vprobot::presentation::CPresentationProvider {
 private:
 	CMap(const CMap &Map) = default;
 public:
-	CMap(const Json::Value &MapObject) :
-			CPresentationProvider(MapObject["presentations"]) {
-	}
+	CMap() = default;
 	virtual ~CMap() = default;
 
 	/* Произвести измерение из точки по направлению */
@@ -78,6 +76,11 @@ private:
 	MapList m_List;
 
 	CLineMap(const CLineMap &Map) = default;
+protected:
+	/* Отображаем данные */
+	void DrawPresentation(
+			const vprobot::presentation::SPresentationParameters *Params,
+			vprobot::presentation::CPresentationDriver &Driver);
 public:
 	CLineMap(const Json::Value &MapObject);
 	~CLineMap();

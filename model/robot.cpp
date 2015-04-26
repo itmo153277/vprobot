@@ -33,7 +33,7 @@ using namespace ::vprobot::robot;
 /* CRobot */
 
 vprobot::robot::CRobot::CRobot(const Json::Value &RobotObject) :
-		CPresentationProvider(RobotObject["presentations"]), m_State() {
+		CPresentationProvider(), m_State() {
 	m_State.s_State << RobotObject["x"].asDouble(), RobotObject["y"].asDouble(), RobotObject["angle"].asDouble();
 	m_Radius = 1 / RobotObject["radius"].asDouble();
 	m_Length = RobotObject["len"].asDouble();
@@ -84,6 +84,31 @@ void vprobot::robot::CRobot::ExecuteCommand(const ControlCommand &Command) {
 			break;
 	}
 	ExecuteCommand(Cmd);
+}
+
+SPresentationParameters *vprobot::robot::CRobot::ParsePresentation(
+		const Json::Value &PresentationObject) {
+	const string &DrawType = PresentationObject["draw"].asString();
+
+	if (DrawType == "Position") {
+		return new SRobotPresentationPrameters(DrawType);
+	}
+	return NULL;
+}
+
+void vprobot::robot::CRobot::DrawPresentation(
+		const SPresentationParameters *Params, CPresentationDriver &Driver) {
+	const SRobotPresentationPrameters *i_Params =
+			dynamic_cast<const SRobotPresentationPrameters *>(Params);
+
+	if (i_Params != NULL && i_Params->m_OutType == "Position") {
+		Driver.DrawLine(m_State.s_State[0], m_State.s_State[1],
+				m_State.s_State[0] + cos(m_State.s_State[2]) * 0.5,
+				m_State.s_State[1] + sin(m_State.s_State[2]) * 0.5, 0, 0, 255,
+				255);
+		Driver.DrawCircle(m_State.s_State[0], m_State.s_State[1], 0.3, 255, 0,
+				0, 255);
+	}
 }
 
 /* CRobotWithExactPosition */
@@ -150,9 +175,9 @@ SPresentationParameters *vprobot::robot::CRobotWithScanner::ParsePresentation(
 }
 
 void vprobot::robot::CRobotWithScanner::DrawPresentation(
-		const SPresentationParameters &Params, CPresentationDriver &Driver) {
+		const SPresentationParameters *Params, CPresentationDriver &Driver) {
 	const SRobotPresentationPrameters *i_Params =
-			dynamic_cast<const SRobotPresentationPrameters *>(&Params);
+			dynamic_cast<const SRobotPresentationPrameters *>(Params);
 
 	if (i_Params != NULL && i_Params->m_OutType == "Measurements") {
 		double *mx, *my, da = m_MaxAngle * 2 / m_Count, angle = PI / 2
@@ -171,13 +196,14 @@ void vprobot::robot::CRobotWithScanner::DrawPresentation(
 			mx[i + 1] = d * cos(angle);
 			my[i + 1] = d * sin(angle);
 		}
-		Driver.DrawShape(mx, my, m_Count + 1, 242, 242, 242, 242, 242, 242);
+		Driver.DrawShape(mx, my, m_Count + 1, 0, 0, 0, 0, 242, 242, 242, 255);
 		for (i = 0; i < m_Count; i++) {
 			if (EqualsZero(m_Measure.Value[i]))
 				continue;
-			Driver.DrawPoint(mx[i + 1], my[i + 1], 128, 128, 128);
+			Driver.DrawCircle(mx[i + 1], my[i + 1], 0.1, 128, 128, 128, 255);
 		}
-		Driver.DrawPoint(0, 0, 255, 0, 0);
+		Driver.DrawLine(0, 0, 0, 0.5, 0, 0, 255, 255);
+		Driver.DrawCircle(0, 0, 0.3, 255, 0, 0, 255);
 		delete[] mx;
 		delete[] my;
 	}

@@ -56,25 +56,19 @@ void ::vprobot::ui::CSDLPresentationDriver::TranslateCoord(double x, double y,
 
 /* Обновить экран */
 void ::vprobot::ui::CSDLPresentationDriver::Update() {
-	SDL_Rect i_Rect = {0, 0, m_Rect.w, m_Rect.h};
-
 	SDL_SetRenderTarget(m_Renderer, m_Texture);
 	SDL_SetRenderDrawColor(m_Renderer, 255, 255, 255, 255);
 	SDL_RenderFillRect(m_Renderer, NULL);
-	SDL_SetRenderDrawColor(m_Renderer, 0, 0, 0, 255);
-	SDL_RenderDrawRect(m_Renderer, &i_Rect);
-	stringRGBA(m_Renderer, 1, 1, m_Title.c_str(), 0, 0, 0, 255);
 }
 
 /* Нарисовать точку */
-void ::vprobot::ui::CSDLPresentationDriver::DrawPoint(double x, double y, int R,
-		int G, int B) {
-	Sint16 r_x, r_y, r = static_cast<Uint16>(m_zoom / 10);
+void ::vprobot::ui::CSDLPresentationDriver::DrawCircle(double x, double y,
+		double r, int R, int G, int B, int A) {
+	Sint16 r_x, r_y, r_r = static_cast<Uint16>(m_zoom * r);
 
 	TranslateCoord(x, y, r_x, r_y);
-	if (r == 0)
-		r = 1;
-	filledCircleRGBA(m_Renderer, r_x, r_y, r, R, G, B, 255);
+	if (r_r > 0 && A > 0)
+		filledCircleRGBA(m_Renderer, r_x, r_y, r_r, R, G, B, A);
 }
 
 /* Нарисовать элипс */
@@ -104,7 +98,8 @@ void ::vprobot::ui::CSDLPresentationDriver::DrawEllipse(double x, double y,
 
 /* Нарисовать фигуру */
 void ::vprobot::ui::CSDLPresentationDriver::DrawShape(double *x, double *y,
-		int count, int R, int G, int B, int f_R, int f_G, int f_B) {
+		int count, int R, int G, int B, int A, int f_R, int f_G, int f_B,
+		int f_A) {
 	Sint16 *r_x, *r_y;
 	int i;
 
@@ -113,15 +108,32 @@ void ::vprobot::ui::CSDLPresentationDriver::DrawShape(double *x, double *y,
 	for (i = 0; i < count; i++) {
 		TranslateCoord(x[i], y[i], r_x[i], r_y[i]);
 	}
-	filledPolygonRGBA(m_Renderer, r_x, r_y, count, f_R, f_G, f_B, 255);
-	polygonRGBA(m_Renderer, r_x, r_y, count, R, G, B, 255);
+	if (f_A > 0)
+		filledPolygonRGBA(m_Renderer, r_x, r_y, count, f_R, f_G, f_B, f_A);
+	if (A > 0)
+		polygonRGBA(m_Renderer, r_x, r_y, count, R, G, B, A);
 	delete[] r_x;
 	delete[] r_y;
+}
+
+/* Нарисовать линию */
+void ::vprobot::ui::CSDLPresentationDriver::DrawLine(double x0, double y0,
+		double xf, double yf, int R, int G, int B, int A) {
+	Sint16 r_x0, r_y0, r_xf, r_yf;
+
+	TranslateCoord(x0, y0, r_x0, r_y0);
+	TranslateCoord(xf, yf, r_xf, r_yf);
+	if (A > 0)
+		lineRGBA(m_Renderer, r_x0, r_y0, r_xf, r_yf, R, G, B, A);
 }
 
 /* Проецировать на экран */
 void ::vprobot::ui::CSDLPresentationDriver::ProjectToSurface() {
 	SDL_RenderCopy(m_Renderer, m_Texture, NULL, &m_Rect);
+	SDL_SetRenderDrawColor(m_Renderer, 0, 0, 0, 255);
+	SDL_RenderDrawRect(m_Renderer, &m_Rect);
+	stringRGBA(m_Renderer, m_Rect.x + 1, m_Rect.y + 1, m_Title.c_str(), 0, 0, 0,
+			255);
 }
 
 /* CUI */
@@ -134,6 +146,7 @@ void ::vprobot::ui::CSDLPresentationDriver::ProjectToSurface() {
 			PresentationObject["height"].asInt();
 
 	m_Delay = PresentationObject["delay"].asInt();
+	m_QuitOnStop = PresentationObject["quit"].asBool();
 	SDL_Init(SDL_INIT_EVERYTHING);
 	m_Window = SDL_CreateWindow(PACKAGE_STRING, SDL_WINDOWPOS_UNDEFINED,
 	SDL_WINDOWPOS_UNDEFINED, i_w, i_h, SDL_WINDOW_SHOWN);
@@ -183,9 +196,9 @@ int ::vprobot::ui::CUI::ThreadProcess() {
 	for (;;) {
 		quit = !(*m_HandlerFunction)();
 		SDL_LockMutex(m_MutexDraw);
-		if (quit)
+		if (quit && m_QuitOnStop)
 			m_Quit = true;
-		if (m_Quit) {
+		if (m_Quit || quit) {
 			SDL_UnlockMutex(m_MutexDraw);
 			break;
 		}

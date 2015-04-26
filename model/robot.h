@@ -72,6 +72,14 @@ enum ControlCommand {
 /* Базовый класс робота */
 class CRobot: public vprobot::presentation::CPresentationProvider {
 private:
+	/* Вывод данных */
+	struct SRobotPresentationPrameters: public vprobot::presentation::SPresentationParameters {
+		std::string m_OutType;
+		SRobotPresentationPrameters(const std::string &OutType) :
+				m_OutType(OutType) {
+		}
+	};
+
 	CRobot(const CRobot &Robot) = default;
 protected:
 	typedef Eigen::Vector3d State;
@@ -86,6 +94,14 @@ protected:
 	double m_Radius;
 	/* Длина перемещений */
 	double m_Length;
+
+	/* Парсинг параметров для экрана */
+	vprobot::presentation::SPresentationParameters *ParsePresentation(
+			const Json::Value &PresentationObject);
+	/* Отображаем данные */
+	void DrawPresentation(
+			const vprobot::presentation::SPresentationParameters *Params,
+			vprobot::presentation::CPresentationDriver &Driver);
 public:
 	CRobot(const Json::Value &RobotObject);
 	virtual ~CRobot();
@@ -135,7 +151,13 @@ public:
 /* Робот, возвращающий расстояния до препятствий */
 class CRobotWithScanner: public CRobot {
 private:
-	CRobotWithScanner(const CRobotWithScanner &Robot) = default;
+	/* Вывод данных */
+	struct SRobotPresentationPrameters: public vprobot::presentation::SPresentationParameters {
+		std::string m_OutType;
+		SRobotPresentationPrameters(const std::string &OutType) :
+				m_OutType(OutType) {
+		}
+	};
 
 	/* Измерение*/
 	SMeasuresDistances m_Measure;
@@ -147,21 +169,15 @@ private:
 	double m_MaxAngle;
 	/* Дальность */
 	double m_MaxLength;
-protected:
-	/* Вывод данных */
-	struct SRobotPresentationPrameters: public vprobot::presentation::SPresentationParameters {
-		std::string m_OutType;
-		SRobotPresentationPrameters(const std::string &OutType) :
-				m_OutType(OutType) {
-		}
-	};
 
+	CRobotWithScanner(const CRobotWithScanner &Robot) = default;
+protected:
 	/* Парсинг параметров для экрана */
 	vprobot::presentation::SPresentationParameters *ParsePresentation(
 			const Json::Value &PresentationObject);
 	/* Отображаем данные */
 	void DrawPresentation(
-			const vprobot::presentation::SPresentationParameters &Params,
+			const vprobot::presentation::SPresentationParameters *Params,
 			vprobot::presentation::CPresentationDriver &Driver);
 public:
 	CRobotWithScanner(const Json::Value &RobotObject,

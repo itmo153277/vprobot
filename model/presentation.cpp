@@ -23,10 +23,8 @@ using namespace ::vprobot::presentation;
 
 /* CPresentationProvider */
 
-vprobot::presentation::CPresentationProvider::CPresentationProvider(
-		const Json::Value &PresentationObject) :
+vprobot::presentation::CPresentationProvider::CPresentationProvider() :
 		m_DataSet() {
-	InitPresentations(PresentationObject);
 }
 
 vprobot::presentation::CPresentationProvider::~CPresentationProvider() {
@@ -52,7 +50,7 @@ void vprobot::presentation::CPresentationProvider::UpdatePresentation(
 		CPresentationDriver &Driver, const std::string &Name) {
 	for (auto d : m_DataSet) {
 		if (Name == d.Name) {
-			DrawPresentation(*d.Parameters, Driver);
+			DrawPresentation(d.Parameters, Driver);
 			break;
 		}
 	}

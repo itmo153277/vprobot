@@ -28,7 +28,7 @@ using namespace ::vprobot::control;
 
 vprobot::control::CSequentialControlSystem::CSequentialControlSystem(
 		const Json::Value &ControlSystemObject) :
-		CControlSystem(ControlSystemObject), m_Set() {
+		CControlSystem(), m_Set() {
 	Json::ArrayIndex i;
 	const Json::Value Commands = ControlSystemObject["commands"];
 

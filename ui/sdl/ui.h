@@ -59,13 +59,16 @@ public:
 	~CSDLPresentationDriver();
 
 	/* Нарисовать точку */
-	void DrawPoint(double x, double y, int R, int G, int B);
+	void DrawCircle(double x, double y, double r, int R, int G, int B, int A);
 	/* Нарисовать элипс */
 	void DrawEllipse(double x, double y, double a, double b, double angle,
 			int R, int G, int B);
 	/* Нарисовать фигуру */
-	void DrawShape(double *x, double *y, int count, int R, int G, int B,
-			int f_R, int f_G, int f_B);
+	void DrawShape(double *x, double *y, int count, int R, int G, int B, int A,
+			int f_R, int f_G, int f_B, int f_A);
+	/* Нарисовать линию */
+	void DrawLine(double x0, double y0, double xf, double yf, int R, int G,
+			int B, int A);
 	/* Проецировать на экран */
 	void ProjectToSurface();
 	/* Обновить экран */
@@ -111,8 +114,10 @@ private:
 	bool m_Quit;
 	/* Условие перерисовки */
 	bool m_Redraw;
-	/* */
+	/* Функция обработки */
 	const HandlerFunction* m_HandlerFunction;
+	/* Выходить по окончании симуляции */
+	bool m_QuitOnStop;
 
 	/* Функция для потока обработки сообщений */
 	static int ThreadFunction(void *data);

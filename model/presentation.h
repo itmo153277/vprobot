@@ -40,13 +40,17 @@ public:
 	virtual ~CPresentationDriver() = default;
 
 	/* Нарисовать точку */
-	virtual void DrawPoint(double x, double y, int R, int G, int B) = 0;
+	virtual void DrawCircle(double x, double y, double r, int R, int G, int B,
+			int A) = 0;
 	/* Нарисовать элипс */
 	virtual void DrawEllipse(double x, double y, double a, double b,
 			double angle, int R, int G, int B) = 0;
 	/* Нарисовать фигуру */
 	virtual void DrawShape(double *x, double *y, int count, int R, int G, int B,
-			int f_R, int f_G, int f_B) = 0;
+			int A, int f_R, int f_G, int f_B, int f_A) = 0;
+	/* Нарисовать линию */
+	virtual void DrawLine(double x0, double y0, double xf, double yf, int R,
+			int G, int B, int A) = 0;
 
 };
 
@@ -81,11 +85,11 @@ protected:
 		return NULL;
 	}
 	/* Отображаем данные */
-	virtual void DrawPresentation(const SPresentationParameters &Params,
+	virtual void DrawPresentation(const SPresentationParameters *Params,
 			CPresentationDriver &Driver) {
 	}
 public:
-	CPresentationProvider(const Json::Value &PresentationObject);
+	CPresentationProvider();
 	virtual ~CPresentationProvider();
 
 	/* Инициализация дополнительных данных */

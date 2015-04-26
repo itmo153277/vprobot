@@ -22,13 +22,14 @@
 using namespace ::std;
 using namespace ::Eigen;
 using namespace ::vprobot;
+using namespace ::vprobot::presentation;
 using namespace ::vprobot::line;
 using namespace ::vprobot::map;
 
 /* CPointMap */
 
 vprobot::map::CPointMap::CPointMap(const Json::Value &MapObject) :
-		CMap(MapObject) {
+		CMap() {
 	const Json::Value MapArray = MapObject["points"];
 
 	/* Загружаем данные */
@@ -58,7 +59,7 @@ double vprobot::map::CPointMap::GetDistance(const Point &p, size_t index) {
 /* CLineMap */
 
 vprobot::map::CLineMap::CLineMap(const Json::Value &MapObject) :
-		CMap(MapObject) {
+		CMap() {
 	const Json::Value MapArray = MapObject["lines"];
 
 	/* Загружаем данные */
@@ -103,4 +104,24 @@ double vprobot::map::CLineMap::GetDistance(const Point &p, double angle) {
 double vprobot::map::CLineMap::GetDistance(const Point &p, size_t index) {
 	/* Нет маяков, невозможно измерить */
 	return 0;
+}
+
+/* Отображаем данные */
+void vprobot::map::CLineMap::DrawPresentation(
+		const SPresentationParameters *Params, CPresentationDriver &Driver) {
+	for (auto l : m_List) {
+		size_t i;
+		Line::const_iterator cl = l.begin();
+		double *mx, *my;
+
+		mx = new double[l.size()];
+		my = new double[l.size()];
+		for (i = 0; i < l.size(); i++, cl++) {
+			mx[i] = (*cl)[0];
+			my[i] = (*cl)[1];
+		}
+		Driver.DrawShape(mx, my, l.size(), 0, 0, 0, 255, 0, 0, 0, 0);
+		delete[] mx;
+		delete[] my;
+	}
 }
