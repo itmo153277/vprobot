@@ -198,13 +198,13 @@ int ::vprobot::ui::CUI::ThreadProcess() {
 
 /* Обновление данных */
 void ::vprobot::ui::CUI::Process(const HandlerFunction &Function) {
-	bool wait = true, input = false, quit = false, skipfirst = true;
+	bool wait = true, input = false, quit = false;
 	SDL_Thread *i_Thread;
 	Uint32 Timer = 0;
 	FPSmanager manager;
 	SDL_Event e;
 
-	m_Redraw = true;
+	m_Redraw = false;
 	m_HandlerFunction = &Function;
 	SDL_initFramerate(&manager);
 	i_Thread = SDL_CreateThread(ThreadFunction, "GUIThread",
@@ -213,8 +213,7 @@ void ::vprobot::ui::CUI::Process(const HandlerFunction &Function) {
 		SDL_framerateDelay(&manager);
 		SDL_LockMutex(m_MutexDraw);
 		if (m_Redraw) {
-			wait = !skipfirst;
-			skipfirst = false;
+			wait = true;
 			Timer = SDL_GetTicks();
 			SDL_SetRenderDrawColor(m_Renderer, 255, 255, 255, 255);
 			SDL_RenderClear(m_Renderer);
