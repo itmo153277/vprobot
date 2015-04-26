@@ -47,6 +47,8 @@ private:
 	vprobot::control::CControlSystem *m_ControlSystem;
 	/* Измерения */
 	const vprobot::robot::SMeasures **m_Measures;
+	/* Команды */
+	const vprobot::robot::ControlCommand *m_Commands;
 
 	CNormalScene(const CNormalScene &Scene) = default;
 public:

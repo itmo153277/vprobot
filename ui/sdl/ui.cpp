@@ -21,6 +21,9 @@
 #include <SDL2/SDL2_framerate.h>
 #include <SDL2/SDL2_gfxPrimitives.h>
 
+#include "../types.h"
+
+using namespace ::vprobot;
 using namespace ::vprobot::presentation;
 using namespace ::vprobot::ui;
 
@@ -48,7 +51,7 @@ using namespace ::vprobot::ui;
 void ::vprobot::ui::CSDLPresentationDriver::TranslateCoord(double x, double y,
 		Sint16 &d_x, Sint16 &d_y) {
 	d_x = static_cast<Sint16>((x + m_ofsx) * m_zoom);
-	d_y = static_cast<Sint16>((y + m_ofsy) * m_zoom);
+	d_y = m_Rect.h - static_cast<Sint16>((y + m_ofsy) * m_zoom);
 }
 
 /* Обновить экран */
@@ -66,10 +69,12 @@ void ::vprobot::ui::CSDLPresentationDriver::Update() {
 /* Нарисовать точку */
 void ::vprobot::ui::CSDLPresentationDriver::DrawPoint(double x, double y, int R,
 		int G, int B) {
-	Sint16 r_x, r_y;
+	Sint16 r_x, r_y, r = static_cast<Uint16>(m_zoom / 10);
 
 	TranslateCoord(x, y, r_x, r_y);
-	pixelRGBA(m_Renderer, x, m_Rect.h - y, R, G, B, 255);
+	if (r == 0)
+		r = 1;
+	filledCircleRGBA(m_Renderer, r_x, r_y, r, R, G, B, 255);
 }
 
 /* Нарисовать элипс */
@@ -90,7 +95,7 @@ void ::vprobot::ui::CSDLPresentationDriver::DrawEllipse(double x, double y,
 	SDL_SetRenderTarget(m_Renderer, m_Texture);
 
 	SDL_Point i_Center = {r_a, r_b};
-	SDL_Rect i_Rect = {r_x, m_Rect.w - r_y, r_w, r_h};
+	SDL_Rect i_Rect = {r_x, r_y, r_w, r_h};
 
 	SDL_RenderCopyEx(m_Renderer, aux, NULL, &i_Rect, -angle, &i_Center,
 			SDL_FLIP_NONE);
@@ -99,7 +104,7 @@ void ::vprobot::ui::CSDLPresentationDriver::DrawEllipse(double x, double y,
 
 /* Нарисовать фигуру */
 void ::vprobot::ui::CSDLPresentationDriver::DrawShape(double *x, double *y,
-		int count, int R, int G, int B) {
+		int count, int R, int G, int B, int f_R, int f_G, int f_B) {
 	Sint16 *r_x, *r_y;
 	int i;
 
@@ -108,6 +113,7 @@ void ::vprobot::ui::CSDLPresentationDriver::DrawShape(double *x, double *y,
 	for (i = 0; i < count; i++) {
 		TranslateCoord(x[i], y[i], r_x[i], r_y[i]);
 	}
+	filledPolygonRGBA(m_Renderer, r_x, r_y, count, f_R, f_G, f_B, 255);
 	polygonRGBA(m_Renderer, r_x, r_y, count, R, G, B, 255);
 	delete[] r_x;
 	delete[] r_y;
@@ -175,6 +181,7 @@ int ::vprobot::ui::CUI::ThreadProcess() {
 	bool quit = false;
 
 	for (;;) {
+		quit = !(*m_HandlerFunction)();
 		SDL_LockMutex(m_MutexDraw);
 		if (quit)
 			m_Quit = true;
@@ -185,14 +192,13 @@ int ::vprobot::ui::CUI::ThreadProcess() {
 		m_Redraw = true;
 		SDL_CondWait(m_Cond, m_MutexDraw);
 		SDL_UnlockMutex(m_MutexDraw);
-		quit = !(*m_HandlerFunction)();
 	}
 	return 0;
 }
 
 /* Обновление данных */
 void ::vprobot::ui::CUI::Process(const HandlerFunction &Function) {
-	bool wait = true, input = false, quit = false;
+	bool wait = true, input = false, quit = false, skipfirst = true;
 	SDL_Thread *i_Thread;
 	Uint32 Timer = 0;
 	FPSmanager manager;
@@ -207,7 +213,8 @@ void ::vprobot::ui::CUI::Process(const HandlerFunction &Function) {
 		SDL_framerateDelay(&manager);
 		SDL_LockMutex(m_MutexDraw);
 		if (m_Redraw) {
-			wait = true;
+			wait = !skipfirst;
+			skipfirst = false;
 			Timer = SDL_GetTicks();
 			SDL_SetRenderDrawColor(m_Renderer, 255, 255, 255, 255);
 			SDL_RenderClear(m_Renderer);

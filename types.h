@@ -93,6 +93,10 @@ bool LessOrEquals(const T &x, const T &y) {
 	return LessOrEqualsZero(x - y);
 }
 template<typename T>
+bool GreaterThan(const T &x, const T &y) {
+	return GreaterThanZero(x - y);
+}
+template<typename T>
 bool GreaterOrEquals(const T &x, const T &y) {
 	return GreaterOrEqualsZero(x - y);
 }

@@ -64,7 +64,8 @@ public:
 	void DrawEllipse(double x, double y, double a, double b, double angle,
 			int R, int G, int B);
 	/* Нарисовать фигуру */
-	void DrawShape(double *x, double *y, int count, int R, int G, int B);
+	void DrawShape(double *x, double *y, int count, int R, int G, int B,
+			int f_R, int f_G, int f_B);
 	/* Проецировать на экран */
 	void ProjectToSurface();
 	/* Обновить экран */

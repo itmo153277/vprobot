@@ -24,6 +24,7 @@
 #endif
 
 #include <cstddef>
+#include <string>
 #include <Eigen/Dense>
 #include <json/json.h>
 #include "presentation.h"
@@ -146,6 +147,22 @@ private:
 	double m_MaxAngle;
 	/* Дальность */
 	double m_MaxLength;
+protected:
+	/* Вывод данных */
+	struct SRobotPresentationPrameters: public vprobot::presentation::SPresentationParameters {
+		std::string m_OutType;
+		SRobotPresentationPrameters(const std::string &OutType) :
+				m_OutType(OutType) {
+		}
+	};
+
+	/* Парсинг параметров для экрана */
+	vprobot::presentation::SPresentationParameters *ParsePresentation(
+			const Json::Value &PresentationObject);
+	/* Отображаем данные */
+	void DrawPresentation(
+			const vprobot::presentation::SPresentationParameters &Params,
+			vprobot::presentation::CPresentationDriver &Driver);
 public:
 	CRobotWithScanner(const Json::Value &RobotObject,
 			::vprobot::map::CMap &Map);

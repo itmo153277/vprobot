@@ -41,6 +41,7 @@ CScene *vprobot::Scene(const Json::Value &SceneObject) {
 
 	const int cMapTypes = 2;
 	static const char *MapAliases[cMapTypes] = {"Point", "Line"};
+
 	function<CMap *()> MapConstructers[cMapTypes] = {
 			[&]() {return new CPointMap(SceneObject["map"]);},
 			[&]() {return new CLineMap(SceneObject["map"]);}};
@@ -74,7 +75,8 @@ CScene *vprobot::Scene(const Json::Value &SceneObject) {
 				CRobot *r = RobotConstructors[i]();
 
 				r->InitPresentations(
-						SceneObject["robot_presentations"][(Json::ArrayIndex) j]);
+						SceneObject["robot_presentations"][(Json::ArrayIndex) j
+								- 1]);
 				Robots.push_back(r);
 			}
 			break;
@@ -103,7 +105,8 @@ CScene *vprobot::Scene(const Json::Value &SceneObject) {
 
 vprobot::scene::CNormalScene::CNormalScene(CMap *Map, RobotSet Robots,
 		CControlSystem *ControlSystem) :
-		m_Map(Map), m_Robots(Robots), m_ControlSystem(ControlSystem) {
+		m_Map(Map), m_Robots(Robots), m_ControlSystem(ControlSystem), m_Commands(
+		NULL) {
 	m_Measures = new const SMeasures *[m_Robots.size()];
 }
 
@@ -119,20 +122,16 @@ vprobot::scene::CNormalScene::~CNormalScene() {
 bool vprobot::scene::CNormalScene::Simulate() {
 	size_t i;
 
+	if (m_Commands != NULL) {
+		for (i = 0; i < m_Robots.size(); i++) {
+			m_Robots[i]->ExecuteCommand(m_Commands[i]);
+		}
+	}
 	for (i = 0; i < m_Robots.size(); i++) {
 		m_Measures[i] = &(m_Robots[i]->Measure());
 	}
-
-	const ControlCommand * const &cmd = m_ControlSystem->GetCommands(
-			m_Measures);
-
-	if (cmd == NULL)
-		return false;
-
-	for (i = 0; i < m_Robots.size(); i++) {
-		m_Robots[i]->ExecuteCommand(cmd[i]);
-	}
-	return true;
+	m_Commands = m_ControlSystem->GetCommands(m_Measures);
+	return m_Commands != NULL;
 }
 
 /* Нарисовать презентацию */

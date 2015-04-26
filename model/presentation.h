@@ -45,8 +45,8 @@ public:
 	virtual void DrawEllipse(double x, double y, double a, double b,
 			double angle, int R, int G, int B) = 0;
 	/* Нарисовать фигуру */
-	virtual void DrawShape(double *x, double *y, int count, int R, int G,
-			int B) = 0;
+	virtual void DrawShape(double *x, double *y, int count, int R, int G, int B,
+			int f_R, int f_G, int f_B) = 0;
 
 };
 

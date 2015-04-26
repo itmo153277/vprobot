@@ -22,8 +22,10 @@
 
 #include <cmath>
 
+using namespace ::std;
 using namespace ::Eigen;
 using namespace ::vprobot;
+using namespace ::vprobot::presentation;
 using namespace ::vprobot::line;
 using namespace ::vprobot::map;
 using namespace ::vprobot::robot;
@@ -123,7 +125,7 @@ const SMeasures &vprobot::robot::CRobotWithPointsPosition::Measure() {
 	return m_Measure;
 }
 
-/* CRobotWithPointsPosition */
+/* CRobotWithPointsScanner */
 
 vprobot::robot::CRobotWithScanner::CRobotWithScanner(
 		const Json::Value &RobotObject, CMap &Map) :
@@ -137,6 +139,51 @@ vprobot::robot::CRobotWithScanner::CRobotWithScanner(
 vprobot::robot::CRobotWithScanner::~CRobotWithScanner() {
 }
 
+SPresentationParameters *vprobot::robot::CRobotWithScanner::ParsePresentation(
+		const Json::Value &PresentationObject) {
+	const string &DrawType = PresentationObject["draw"].asString();
+
+	if (DrawType == "Measurements") {
+		return new SRobotPresentationPrameters(DrawType);
+	}
+	return CRobot::ParsePresentation(PresentationObject);
+}
+
+void vprobot::robot::CRobotWithScanner::DrawPresentation(
+		const SPresentationParameters &Params, CPresentationDriver &Driver) {
+	const SRobotPresentationPrameters *i_Params =
+			dynamic_cast<const SRobotPresentationPrameters *>(&Params);
+
+	if (i_Params != NULL && i_Params->m_OutType == "Measurements") {
+		double *mx, *my, da = m_MaxAngle * 2 / m_Count, angle = PI / 2
+				- m_MaxAngle + da / 2;
+		size_t i;
+
+		mx = new double[m_Count + 1];
+		my = new double[m_Count + 1];
+		*mx = 0;
+		*my = 0;
+		for (i = 0; i < m_Count; i++, angle += da) {
+			double d = m_Measure.Value[i];
+
+			if (EqualsZero(d))
+				d = m_MaxLength;
+			mx[i + 1] = d * cos(angle);
+			my[i + 1] = d * sin(angle);
+		}
+		Driver.DrawShape(mx, my, m_Count + 1, 242, 242, 242, 242, 242, 242);
+		for (i = 0; i < m_Count; i++) {
+			if (EqualsZero(m_Measure.Value[i]))
+				continue;
+			Driver.DrawPoint(mx[i + 1], my[i + 1], 128, 128, 128);
+		}
+		Driver.DrawPoint(0, 0, 255, 0, 0);
+		delete[] mx;
+		delete[] my;
+	}
+	CRobot::DrawPresentation(Params, Driver);
+}
+
 /* Произвести измерения */
 const SMeasures &vprobot::robot::CRobotWithScanner::Measure() {
 	size_t i;
@@ -147,8 +194,8 @@ const SMeasures &vprobot::robot::CRobotWithScanner::Measure() {
 	for (i = 0; i < m_Count; i++, angle += da) {
 		double d = m_Map.GetDistance(r, angle);
 
-		if (d > m_MaxLength)
-			d = m_MaxLength;
+		if (GreaterThan(d, m_MaxLength))
+			d = 0;
 		m_Measure.Value[i] = d;
 	}
 	return m_Measure;
