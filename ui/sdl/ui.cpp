@@ -152,17 +152,10 @@ void ::vprobot::ui::CSDLPresentationDriver::ProjectToSurface() {
 	}
 
 	m_MutexDraw = SDL_CreateMutex();
-	if (m_Delay == 0) {
-		m_Cond = SDL_CreateCond();
-	} else {
-		m_Cond = NULL;
-	}
+	m_Cond = SDL_CreateCond();
 }
 
 ::vprobot::ui::CUI::~CUI() {
-	SDL_LockMutex(m_MutexDraw);
-	m_Quit = true;
-	SDL_UnlockMutex(m_MutexDraw);
 	SDL_DestroyCond(m_Cond);
 	SDL_DestroyMutex(m_MutexDraw);
 	for (auto s : m_ScreensSet) {
