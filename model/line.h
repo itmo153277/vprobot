@@ -25,6 +25,7 @@
 
 #include <vector>
 #include <Eigen/Dense>
+#include <Eigen/StdVector>
 
 namespace vprobot {
 
@@ -33,7 +34,7 @@ namespace line {
 /* Тип для точки */
 typedef Eigen::Vector2d Point;
 /* Тип для линии */
-typedef std::vector<Point> Line;
+typedef std::vector<Point, Eigen::aligned_allocator<Point>> Line;
 
 /* Функция поворота точки на угол */
 Point Rotate(const Point &r, double angle);

@@ -32,7 +32,7 @@ using namespace ::vprobot::robot;
 
 vprobot::robot::CRobot::CRobot(const Json::Value &RobotObject) :
 		CPresentationProvider(RobotObject["presentations"]), m_State() {
-	m_State << RobotObject["x"].asDouble(), RobotObject["y"].asDouble(), RobotObject["angle"].asDouble();
+	m_State.s_State << RobotObject["x"].asDouble(), RobotObject["y"].asDouble(), RobotObject["angle"].asDouble();
 	m_Radius = 1 / RobotObject["radius"].asDouble();
 	m_Length = RobotObject["len"].asDouble();
 }
@@ -50,8 +50,9 @@ void vprobot::robot::CRobot::ExecuteCommand(const Control &Command) {
 	} else {
 		dx << sin(angle) / Command[1], (1 - cos(angle)) / Command[1];
 	}
-	m_State += (State() << Rotate(dx, m_State[2]), angle).finished();
-	m_State[2] = CorrectAngle(m_State[2]);
+	m_State.s_State +=
+			(State() << Rotate(dx, m_State.s_State[2]), angle).finished();
+	m_State.s_State[2] = CorrectAngle(m_State.s_State[2]);
 }
 
 void vprobot::robot::CRobot::ExecuteCommand(const ControlCommand &Command) {
@@ -95,7 +96,7 @@ vprobot::robot::CRobotWithExactPosition::~CRobotWithExactPosition() {
 
 /* Произвести измерения */
 const SMeasures &vprobot::robot::CRobotWithExactPosition::Measure() {
-	m_Measure.Value = m_State;
+	m_Measure.Value = m_State.s_State;
 	return m_Measure;
 }
 
@@ -114,7 +115,7 @@ vprobot::robot::CRobotWithPointsPosition::~CRobotWithPointsPosition() {
 /* Произвести измерения */
 const SMeasures &vprobot::robot::CRobotWithPointsPosition::Measure() {
 	size_t i;
-	Point r(m_State[0], m_State[1]);
+	Point r(m_State.s_State[0], m_State.s_State[1]);
 
 	for (i = 0; i < m_Count; i++) {
 		m_Measure.Value[i] = m_Map.GetDistance(r, i);
@@ -139,8 +140,9 @@ vprobot::robot::CRobotWithScanner::~CRobotWithScanner() {
 /* Произвести измерения */
 const SMeasures &vprobot::robot::CRobotWithScanner::Measure() {
 	size_t i;
-	double angle = m_State[2] - m_MaxAngle, da = m_MaxAngle * 2 / m_Count;
-	Point r(m_State[0], m_State[1]);
+	double angle = m_State.s_State[2] - m_MaxAngle, da = m_MaxAngle * 2
+			/ m_Count;
+	Point r(m_State.s_State[0], m_State.s_State[1]);
 
 	for (i = 0; i < m_Count; i++, angle += da) {
 		double d = m_Map.GetDistance(r, angle);

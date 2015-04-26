@@ -41,7 +41,7 @@ CScene *vprobot::Scene(const Json::Value &SceneObject) {
 
 	const int cMapTypes = 2;
 	static const char *MapAliases[cMapTypes] = {"Point", "Line"};
-	std::function<CMap *()> MapConstructers[cMapTypes] = {
+	function<CMap *()> MapConstructers[cMapTypes] = {
 			[&]() {return new CPointMap(SceneObject["map"]);},
 			[&]() {return new CLineMap(SceneObject["map"]);}};
 	const int cRobotTypes = 3;

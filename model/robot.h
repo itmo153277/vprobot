@@ -41,6 +41,7 @@ struct SMeasures {
 
 /* Измеряем точное положение робота */
 struct SMeasuresExactPosition: public SMeasures {
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 	Eigen::Vector3d Value;
 };
 
@@ -73,9 +74,13 @@ private:
 	CRobot(const CRobot &Robot) = default;
 protected:
 	typedef Eigen::Vector3d State;
+	struct SState {
+		EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+		State s_State;
+	};
 
 	/* Состояние робота */
-	State m_State;
+	SState m_State;
 	/* Радиус поворота */
 	double m_Radius;
 	/* Длина перемещений */
