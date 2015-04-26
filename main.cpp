@@ -56,8 +56,7 @@ int ParseAndRun(const char *in_file) {
 
 	CUI UI(*oScene, root["presentation"]);
 
-	while (UI.Update() && oScene->Simulate())
-		;
+	UI.Process([&] {return oScene->Simulate();});
 	delete oScene;
 	return EXIT_SUCCESS;
 }

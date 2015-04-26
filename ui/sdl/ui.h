@@ -25,6 +25,7 @@
 
 #include <string>
 #include <vector>
+#include <functional>
 #include <SDL2/SDL.h>
 #include <json/json.h>
 #include "../../model/presentation.h"
@@ -41,19 +42,15 @@ private:
 	double m_ofsy;
 	double m_zoom;
 	std::string m_Title;
-	/* Внутреняя поверхность */
-	SDL_Surface *m_Surface;
 	/* Рендерер */
 	SDL_Renderer *m_Renderer;
 	/* Текстура */
 	SDL_Texture *m_Texture;
-	/* Место, куда будет записываться данные */
+	/* Место, куда будут записываться данные */
 	SDL_Rect m_Rect;
 
 	/* Функция для преобразования координат */
 	void TranslateCoord(double x, double y, Sint16 &d_x, Sint16 &d_y);
-	/* Обновить экран */
-	void Update();
 
 	CSDLPresentationDriver(const CSDLPresentationDriver &Driver) = default;
 public:
@@ -70,10 +67,15 @@ public:
 	void DrawShape(double *x, double *y, int count, int R, int G, int B);
 	/* Проецировать на экран */
 	void ProjectToSurface();
+	/* Обновить экран */
+	void Update();
 };
 
 /* Класс интерфейса пользователя */
 class CUI {
+public:
+	/* Тип для обработчика */
+	typedef std::function<bool()> HandlerFunction;
 private:
 	/* Структура для экрана */
 	struct SScreen {
@@ -96,8 +98,8 @@ private:
 	SDL_Window *m_Window;
 	/* Поверхность окна */
 	SDL_Renderer *m_Renderer;
-	/* Поток обработки сообщений */
-	SDL_Thread *m_Thread;
+	/* Текстура */
+	SDL_Texture *m_Texture;
 	/* Мьютекс для обновления экрана */
 	SDL_mutex *m_MutexDraw;
 	/* Время ожидания */
@@ -106,6 +108,10 @@ private:
 	SDL_cond *m_Cond;
 	/* Условие завершения цикла (программа закрыта) */
 	bool m_Quit;
+	/* Условие перерисовки */
+	bool m_Redraw;
+	/* */
+	const HandlerFunction* m_HandlerFunction;
 
 	/* Функция для потока обработки сообщений */
 	static int ThreadFunction(void *data);
@@ -118,7 +124,7 @@ public:
 	~CUI();
 
 	/* Обновление данных */
-	bool Update();
+	void Process(const HandlerFunction &Handler);
 };
 
 }

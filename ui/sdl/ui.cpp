@@ -36,12 +36,12 @@ using namespace ::vprobot::ui;
 	m_ofsx = ScreenObject["ofsx"].asDouble();
 	m_ofsy = ScreenObject["ofsy"].asDouble();
 	m_zoom = ScreenObject["zoom"].asDouble();
-	m_Texture = SDL_CreateTexture(m_Renderer, SDL_PIXELFORMAT_ARGB8888,
+	m_Texture = SDL_CreateTexture(m_Renderer, SDL_PIXELFORMAT_RGBA8888,
 			SDL_TEXTUREACCESS_TARGET, m_Rect.w, m_Rect.h);
-	Update();
 }
 
 ::vprobot::ui::CSDLPresentationDriver::~CSDLPresentationDriver() {
+	SDL_DestroyTexture(m_Texture);
 }
 
 /* Функция для преобразования координат */
@@ -57,11 +57,10 @@ void ::vprobot::ui::CSDLPresentationDriver::Update() {
 
 	SDL_SetRenderTarget(m_Renderer, m_Texture);
 	SDL_SetRenderDrawColor(m_Renderer, 255, 255, 255, 255);
-	SDL_RenderClear(m_Renderer);
+	SDL_RenderFillRect(m_Renderer, NULL);
 	SDL_SetRenderDrawColor(m_Renderer, 0, 0, 0, 255);
 	SDL_RenderDrawRect(m_Renderer, &i_Rect);
 	stringRGBA(m_Renderer, 1, 1, m_Title.c_str(), 0, 0, 0, 255);
-	SDL_SetRenderTarget(m_Renderer, NULL);
 }
 
 /* Нарисовать точку */
@@ -70,9 +69,7 @@ void ::vprobot::ui::CSDLPresentationDriver::DrawPoint(double x, double y, int R,
 	Sint16 r_x, r_y;
 
 	TranslateCoord(x, y, r_x, r_y);
-	SDL_SetRenderTarget(m_Renderer, m_Texture);
 	pixelRGBA(m_Renderer, x, m_Rect.h - y, R, G, B, 255);
-	SDL_SetRenderTarget(m_Renderer, NULL);
 }
 
 /* Нарисовать элипс */
@@ -91,11 +88,12 @@ void ::vprobot::ui::CSDLPresentationDriver::DrawEllipse(double x, double y,
 	SDL_SetRenderTarget(m_Renderer, aux);
 	ellipseRGBA(m_Renderer, r_a, r_b, r_a, r_b, R, G, B, 255);
 	SDL_SetRenderTarget(m_Renderer, m_Texture);
+
 	SDL_Point i_Center = {r_a, r_b};
 	SDL_Rect i_Rect = {r_x, m_Rect.w - r_y, r_w, r_h};
+
 	SDL_RenderCopyEx(m_Renderer, aux, NULL, &i_Rect, -angle, &i_Center,
 			SDL_FLIP_NONE);
-	SDL_SetRenderTarget(m_Renderer, NULL);
 	SDL_DestroyTexture(aux);
 }
 
@@ -110,9 +108,7 @@ void ::vprobot::ui::CSDLPresentationDriver::DrawShape(double *x, double *y,
 	for (i = 0; i < count; i++) {
 		TranslateCoord(x[i], y[i], r_x[i], r_y[i]);
 	}
-	SDL_SetRenderTarget(m_Renderer, m_Texture);
-	filledPolygonRGBA(m_Renderer, r_x, r_y, count, R, G, B, 255);
-	SDL_SetRenderTarget(m_Renderer, NULL);
+	polygonRGBA(m_Renderer, r_x, r_y, count, R, G, B, 255);
 	delete[] r_x;
 	delete[] r_y;
 }
@@ -120,23 +116,32 @@ void ::vprobot::ui::CSDLPresentationDriver::DrawShape(double *x, double *y,
 /* Проецировать на экран */
 void ::vprobot::ui::CSDLPresentationDriver::ProjectToSurface() {
 	SDL_RenderCopy(m_Renderer, m_Texture, NULL, &m_Rect);
-	Update();
 }
 
 /* CUI */
 
 ::vprobot::ui::CUI::CUI(CPresentationHandler &Handler,
 		const Json::Value &PresentationObject) :
-		m_Handler(Handler), m_ScreensSet(), m_Quit(false) {
+		m_Handler(Handler), m_ScreensSet(), m_Quit(false), m_Redraw(true), m_HandlerFunction(
+		NULL) {
+	int i_w = PresentationObject["width"].asInt(), i_h =
+			PresentationObject["height"].asInt();
+
 	m_Delay = PresentationObject["delay"].asInt();
 	SDL_Init(SDL_INIT_EVERYTHING);
 	m_Window = SDL_CreateWindow(PACKAGE_STRING, SDL_WINDOWPOS_UNDEFINED,
-	SDL_WINDOWPOS_UNDEFINED, PresentationObject["width"].asInt(),
-			PresentationObject["height"].asInt(), SDL_WINDOW_SHOWN);
-	m_Renderer = SDL_CreateRenderer(m_Window, 0,
-			SDL_RENDERER_ACCELERATED || SDL_RENDERER_TARGETTEXTURE);
+	SDL_WINDOWPOS_UNDEFINED, i_w, i_h, SDL_WINDOW_SHOWN);
+	std::cout << SDL_GetError() << std::endl;
+	m_Renderer = SDL_CreateRenderer(m_Window, -1,
+			SDL_RENDERER_ACCELERATED || SDL_RENDERER_PRESENTVSYNC
+					|| SDL_RENDERER_TARGETTEXTURE);
+	m_Texture = SDL_CreateTexture(m_Renderer, SDL_PIXELFORMAT_RGBA8888,
+			SDL_TEXTUREACCESS_TARGET, i_w, i_h);
 	SDL_SetRenderDrawColor(m_Renderer, 255, 255, 255, 255);
 	SDL_RenderClear(m_Renderer);
+	SDL_SetRenderTarget(m_Renderer, m_Texture);
+	SDL_RenderFillRect(m_Renderer, NULL);
+	SDL_SetRenderTarget(m_Renderer, NULL);
 	SDL_RenderPresent(m_Renderer);
 
 	Json::ArrayIndex i;
@@ -152,20 +157,18 @@ void ::vprobot::ui::CSDLPresentationDriver::ProjectToSurface() {
 	} else {
 		m_Cond = NULL;
 	}
-	m_Thread = SDL_CreateThread(ThreadFunction, "GUIThread",
-			static_cast<void *>(this));
 }
 
 ::vprobot::ui::CUI::~CUI() {
 	SDL_LockMutex(m_MutexDraw);
 	m_Quit = true;
 	SDL_UnlockMutex(m_MutexDraw);
-	SDL_WaitThread(m_Thread, NULL);
 	SDL_DestroyCond(m_Cond);
 	SDL_DestroyMutex(m_MutexDraw);
 	for (auto s : m_ScreensSet) {
 		delete s;
 	}
+	SDL_DestroyTexture(m_Texture);
 	SDL_DestroyRenderer(m_Renderer);
 	SDL_DestroyWindow(m_Window);
 	SDL_Quit();
@@ -176,49 +179,90 @@ int ::vprobot::ui::CUI::ThreadFunction(void *data) {
 	return static_cast<CUI *>(data)->ThreadProcess();
 }
 int ::vprobot::ui::CUI::ThreadProcess() {
-	FPSmanager manager;
-	SDL_Event e;
+	bool quit = false;
 
-	SDL_initFramerate(&manager);
-	do {
-		SDL_framerateDelay(&manager);
+	for (;;) {
 		SDL_LockMutex(m_MutexDraw);
-		while (SDL_PollEvent(&e)) {
-			switch (e.type) {
-				case SDL_QUIT:
-					m_Quit = true;
-					SDL_CondSignal(m_Cond);
-					break;
-				case SDL_KEYDOWN:
-					SDL_CondSignal(m_Cond);
-					break;
-			}
+		if (quit)
+			m_Quit = true;
+		if (m_Quit) {
+			SDL_UnlockMutex(m_MutexDraw);
+			break;
 		}
+		m_Redraw = true;
+		SDL_CondWait(m_Cond, m_MutexDraw);
 		SDL_UnlockMutex(m_MutexDraw);
-	} while (!m_Quit);
+		quit = !(*m_HandlerFunction)();
+	}
 	return 0;
 }
 
 /* Обновление данных */
-bool ::vprobot::ui::CUI::Update() {
-	bool quit;
+void ::vprobot::ui::CUI::Process(const HandlerFunction &Function) {
+	bool wait = true, input = false, quit = false;
+	SDL_Thread *i_Thread;
+	Uint32 Timer = 0;
+	FPSmanager manager;
+	SDL_Event e;
 
-	SDL_LockMutex(m_MutexDraw);
-	SDL_SetRenderDrawColor(m_Renderer, 255, 255, 255, 255);
-	SDL_RenderClear(m_Renderer);
-	for (auto s : m_ScreensSet) {
-		m_Handler.DrawPresentation(s->Driver, s->Name);
-		s->Driver.ProjectToSurface();
-	}
-	SDL_RenderPresent(m_Renderer);
-	if (m_Delay == 0) {
-		SDL_CondWait(m_Cond, m_MutexDraw);
-	}
-	quit = m_Quit;
-	SDL_UnlockMutex(m_MutexDraw);
-	if (quit)
-		return false;
-	if (m_Delay > 0)
-		SDL_Delay(m_Delay);
-	return true;
+	m_Redraw = true;
+	m_HandlerFunction = &Function;
+	SDL_initFramerate(&manager);
+	i_Thread = SDL_CreateThread(ThreadFunction, "GUIThread",
+			static_cast<void *>(this));
+	do {
+		SDL_framerateDelay(&manager);
+		SDL_LockMutex(m_MutexDraw);
+		if (m_Redraw) {
+			wait = true;
+			Timer = SDL_GetTicks();
+			SDL_SetRenderDrawColor(m_Renderer, 255, 255, 255, 255);
+			SDL_RenderClear(m_Renderer);
+			for (auto s : m_ScreensSet) {
+				s->Driver.Update();
+				m_Handler.DrawPresentation(s->Driver, s->Name);
+				SDL_SetRenderTarget(m_Renderer, m_Texture);
+				s->Driver.ProjectToSurface();
+			}
+			SDL_SetRenderTarget(m_Renderer, NULL);
+			SDL_RenderCopy(m_Renderer, m_Texture, NULL, NULL);
+			SDL_RenderPresent(m_Renderer);
+			m_Redraw = false;
+		} else {
+			SDL_SetRenderDrawColor(m_Renderer, 255, 255, 255, 255);
+			SDL_RenderClear(m_Renderer);
+			SDL_RenderCopy(m_Renderer, m_Texture, NULL, NULL);
+			SDL_RenderPresent(m_Renderer);
+		}
+		while (SDL_PollEvent(&e)) {
+			switch (e.type) {
+				case SDL_QUIT:
+					m_Quit = true;
+					break;
+				case SDL_KEYDOWN:
+					input = true;
+					break;
+			}
+		}
+		if (wait) {
+			if (m_Quit)
+				SDL_CondSignal(m_Cond);
+			else if (m_Delay == 0) {
+				if (input) {
+					wait = false;
+					input = false;
+					SDL_CondSignal(m_Cond);
+				}
+			} else {
+				if ((SDL_GetTicks() - Timer) >= static_cast<Uint32>(m_Delay)) {
+					wait = false;
+					SDL_CondSignal(m_Cond);
+				}
+			}
+		}
+		quit = m_Quit;
+		SDL_UnlockMutex(m_MutexDraw);
+	} while (!quit);
+	SDL_WaitThread(i_Thread, NULL);
+	m_HandlerFunction = NULL;
 }
