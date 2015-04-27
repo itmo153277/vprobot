@@ -49,11 +49,45 @@ private:
 	const vprobot::robot::SMeasures **m_Measures;
 	/* Команды */
 	const vprobot::robot::ControlCommand *m_Commands;
+	/* Текущий шаг */
+	int m_Time;
+	/* Класс для вывода информации */
+	class CInfo: public vprobot::presentation::CPresentationProvider {
+	private:
+		/* Вывод данных */
+		struct SInfoPresentationPrameters: public vprobot::presentation::SPresentationParameters {
+			double x;
+			double y;
+			double dy;
+			SInfoPresentationPrameters(const Json::Value &InfoData) :
+					SPresentationParameters() {
+				x = InfoData["x"].asDouble();
+				y = InfoData["y"].asDouble();
+				dy = InfoData["dy"].asDouble();
+			}
+		};
+		/* Ссылка на сцену */
+		const CNormalScene &m_Scene;
+
+		CInfo(const CInfo &Info) = default;
+	protected:
+		/* Парсинг параметров для экрана */
+		vprobot::presentation::SPresentationParameters *ParsePresentation(
+				const Json::Value &PresentationObject);
+		/* Отображаем данные */
+		void DrawPresentation(
+				const vprobot::presentation::SPresentationParameters *Params,
+				vprobot::presentation::CPresentationDriver &Driver);
+	public:
+		CInfo(const CNormalScene &Scene);
+		~CInfo();
+	} m_Info;
 
 	CNormalScene(const CNormalScene &Scene) = default;
 public:
 	CNormalScene(vprobot::map::CMap *Map, RobotSet Robots,
-			vprobot::control::CControlSystem *ControlSystem);
+			vprobot::control::CControlSystem *ControlSystem,
+			const Json::Value &PresentationObject);
 	~CNormalScene();
 
 	/* Выполнить симуляцию */

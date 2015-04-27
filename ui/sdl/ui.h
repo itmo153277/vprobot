@@ -69,6 +69,9 @@ public:
 	/* Нарисовать линию */
 	void DrawLine(double x0, double y0, double xf, double yf, int R, int G,
 			int B, int A);
+	/* Написать текст */
+	void PutText(double x, double y, const char *Text, int R, int G, int B,
+			int A);
 	/* Проецировать на экран */
 	void ProjectToSurface();
 	/* Обновить экран */
@@ -114,6 +117,8 @@ private:
 	bool m_Quit;
 	/* Условие перерисовки */
 	bool m_Redraw;
+	/* Первый проход */
+	bool m_FirstStart;
 	/* Функция обработки */
 	const HandlerFunction* m_HandlerFunction;
 	/* Выходить по окончании симуляции */

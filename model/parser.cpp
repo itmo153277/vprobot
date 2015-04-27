@@ -20,10 +20,12 @@
 
 #include <cstddef>
 #include <string>
+#include <sstream>
 #include <functional>
 
 using namespace ::std;
 using namespace ::vprobot;
+using namespace ::vprobot::presentation;
 using namespace ::vprobot::map;
 using namespace ::vprobot::robot;
 using namespace ::vprobot::control;
@@ -102,16 +104,18 @@ CScene *vprobot::Scene(const Json::Value &SceneObject) {
 		delete Map;
 		return NULL;
 	}
-	return new CNormalScene(Map, Robots, ControlSystem);
+	return new CNormalScene(Map, Robots, ControlSystem,
+			SceneObject["presentations"]);
 }
 
 /* CNormalScene */
 
 vprobot::scene::CNormalScene::CNormalScene(CMap *Map, RobotSet Robots,
-		CControlSystem *ControlSystem) :
+		CControlSystem *ControlSystem, const Json::Value &PresentationObject) :
 		m_Map(Map), m_Robots(Robots), m_ControlSystem(ControlSystem), m_Commands(
-		NULL) {
+		NULL), m_Time(0), m_Info(*this) {
 	m_Measures = new const SMeasures *[m_Robots.size()];
+	m_Info.InitPresentations(PresentationObject);
 }
 
 vprobot::scene::CNormalScene::~CNormalScene() {
@@ -135,6 +139,7 @@ bool vprobot::scene::CNormalScene::Simulate() {
 		m_Measures[i] = &(m_Robots[i]->Measure());
 	}
 	m_Commands = m_ControlSystem->GetCommands(m_Measures);
+	m_Time++;
 	return m_Commands != NULL;
 }
 
@@ -147,4 +152,44 @@ void vprobot::scene::CNormalScene::DrawPresentation(
 		r->UpdatePresentation(Driver, Name);
 	}
 	m_ControlSystem->UpdatePresentation(Driver, Name);
+	m_Info.UpdatePresentation(Driver, Name);
+}
+
+/* CNormalScene::CInfo */
+
+vprobot::scene::CNormalScene::CInfo::CInfo(const CNormalScene &Scene) :
+		CPresentationProvider(), m_Scene(Scene) {
+}
+
+vprobot::scene::CNormalScene::CInfo::~CInfo() {
+}
+
+/* Парсинг параметров для экрана */
+SPresentationParameters *vprobot::scene::CNormalScene::CInfo::ParsePresentation(
+		const Json::Value &PresentationObject) {
+	return new SInfoPresentationPrameters(PresentationObject);
+}
+
+/* Отображаем данные */
+void vprobot::scene::CNormalScene::CInfo::DrawPresentation(
+		const SPresentationParameters *Params, CPresentationDriver &Driver) {
+	const SInfoPresentationPrameters *i_Params =
+			dynamic_cast<const SInfoPresentationPrameters *>(Params);
+
+	if (i_Params != NULL) {
+		stringstream outstr;
+
+		outstr << "Time: " << m_Scene.m_Time << flush;
+		Driver.PutText(i_Params->x, i_Params->y, outstr.str().c_str(), 0, 0, 0,
+				255);
+		outstr.str(string());
+		outstr << "Status: ";
+		if (m_Scene.m_Time == 0 || m_Scene.m_Commands != NULL)
+			outstr << "Working";
+		else
+			outstr << "Stopped";
+		outstr << flush;
+		Driver.PutText(i_Params->x, i_Params->y + i_Params->dy,
+				outstr.str().c_str(), 0, 0, 0, 255);
+	}
 }

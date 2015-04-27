@@ -127,6 +127,16 @@ void ::vprobot::ui::CSDLPresentationDriver::DrawLine(double x0, double y0,
 		lineRGBA(m_Renderer, r_x0, r_y0, r_xf, r_yf, R, G, B, A);
 }
 
+/* Написать текст */
+void ::vprobot::ui::CSDLPresentationDriver::PutText(double x, double y,
+		const char *Text, int R, int G, int B, int A) {
+	Sint16 r_x, r_y;
+
+	TranslateCoord(x, y, r_x, r_y);
+	if (A > 0)
+		stringRGBA(m_Renderer, r_x, r_y, Text, R, G, B, A);
+}
+
 /* Проецировать на экран */
 void ::vprobot::ui::CSDLPresentationDriver::ProjectToSurface() {
 	SDL_RenderCopy(m_Renderer, m_Texture, NULL, &m_Rect);
@@ -140,7 +150,8 @@ void ::vprobot::ui::CSDLPresentationDriver::ProjectToSurface() {
 
 ::vprobot::ui::CUI::CUI(CPresentationHandler &Handler,
 		const Json::Value &PresentationObject) :
-		m_Handler(Handler), m_ScreensSet(), m_Quit(false), m_Redraw(true), m_HandlerFunction(
+		m_Handler(Handler), m_ScreensSet(), m_Quit(false), m_Redraw(true), m_FirstStart(
+				true), m_HandlerFunction(
 		NULL) {
 	int i_w = PresentationObject["width"].asInt(), i_h =
 			PresentationObject["height"].asInt();
@@ -194,17 +205,20 @@ int ::vprobot::ui::CUI::ThreadProcess() {
 	bool quit = false;
 
 	for (;;) {
-		quit = !(*m_HandlerFunction)();
 		SDL_LockMutex(m_MutexDraw);
 		if (quit && m_QuitOnStop)
 			m_Quit = true;
-		if (m_Quit || quit) {
+		if (m_Quit) {
 			SDL_UnlockMutex(m_MutexDraw);
 			break;
 		}
 		m_Redraw = true;
 		SDL_CondWait(m_Cond, m_MutexDraw);
+		m_FirstStart = false;
 		SDL_UnlockMutex(m_MutexDraw);
+		if (quit)
+			break;
+		quit = !(*m_HandlerFunction)();
 	}
 	return 0;
 }
@@ -217,7 +231,8 @@ void ::vprobot::ui::CUI::Process(const HandlerFunction &Function) {
 	FPSmanager manager;
 	SDL_Event e;
 
-	m_Redraw = false;
+	m_Redraw = true;
+	m_FirstStart = true;
 	m_HandlerFunction = &Function;
 	SDL_initFramerate(&manager);
 	i_Thread = SDL_CreateThread(ThreadFunction, "GUIThread",
@@ -257,7 +272,9 @@ void ::vprobot::ui::CUI::Process(const HandlerFunction &Function) {
 			}
 		}
 		if (wait) {
-			if (m_Quit)
+			if (m_FirstStart) {
+				SDL_CondSignal(m_Cond);
+			} else if (m_Quit)
 				SDL_CondSignal(m_Cond);
 			else if (m_Delay == 0) {
 				if (input) {

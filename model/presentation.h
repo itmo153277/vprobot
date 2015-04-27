@@ -51,6 +51,9 @@ public:
 	/* Нарисовать линию */
 	virtual void DrawLine(double x0, double y0, double xf, double yf, int R,
 			int G, int B, int A) = 0;
+	/* Написать текст */
+	virtual void PutText(double x, double y, const char *Text, int R, int G,
+			int B, int A) = 0;
 
 };
 
