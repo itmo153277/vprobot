@@ -51,6 +51,11 @@ private:
 	const vprobot::robot::ControlCommand *m_Commands;
 	/* Текущий шаг */
 	int m_Time;
+	/* Текущий статус */
+	enum {
+		m_Working,
+		m_Stopped
+	} m_Status;
 	/* Класс для вывода информации */
 	class CInfo: public vprobot::presentation::CPresentationProvider {
 	private:

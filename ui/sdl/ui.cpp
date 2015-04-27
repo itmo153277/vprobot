@@ -202,9 +202,13 @@ int ::vprobot::ui::CUI::ThreadFunction(void *data) {
 	return static_cast<CUI *>(data)->ThreadProcess();
 }
 int ::vprobot::ui::CUI::ThreadProcess() {
-	bool quit = false;
+	bool quit = false, wait = false;
 
 	for (;;) {
+		quit = !(*m_HandlerFunction)();
+		if (m_Delay > 0 && wait)
+			SDL_Delay(m_Delay);
+		wait = !wait;
 		SDL_LockMutex(m_MutexDraw);
 		if (quit && m_QuitOnStop)
 			m_Quit = true;
@@ -218,20 +222,18 @@ int ::vprobot::ui::CUI::ThreadProcess() {
 		SDL_UnlockMutex(m_MutexDraw);
 		if (quit)
 			break;
-		quit = !(*m_HandlerFunction)();
 	}
 	return 0;
 }
 
 /* Обновление данных */
 void ::vprobot::ui::CUI::Process(const HandlerFunction &Function) {
-	bool wait = true, input = false, quit = false;
+	bool wait = true, input = false, quit = false, wait2 = true;
 	SDL_Thread *i_Thread;
-	Uint32 Timer = 0;
 	FPSmanager manager;
 	SDL_Event e;
 
-	m_Redraw = true;
+	m_Redraw = false;
 	m_FirstStart = true;
 	m_HandlerFunction = &Function;
 	SDL_initFramerate(&manager);
@@ -242,7 +244,7 @@ void ::vprobot::ui::CUI::Process(const HandlerFunction &Function) {
 		SDL_LockMutex(m_MutexDraw);
 		if (m_Redraw) {
 			wait = true;
-			Timer = SDL_GetTicks();
+			wait2 = !wait2;
 			SDL_SetRenderDrawColor(m_Renderer, 255, 255, 255, 255);
 			SDL_RenderClear(m_Renderer);
 			for (auto s : m_ScreensSet) {
@@ -274,19 +276,16 @@ void ::vprobot::ui::CUI::Process(const HandlerFunction &Function) {
 		if (wait) {
 			if (m_FirstStart) {
 				SDL_CondSignal(m_Cond);
-			} else if (m_Quit)
+			} else if (m_Quit) {
 				SDL_CondSignal(m_Cond);
-			else if (m_Delay == 0) {
+			} else if (m_Delay == 0 && wait2) {
 				if (input) {
 					wait = false;
 					input = false;
 					SDL_CondSignal(m_Cond);
 				}
 			} else {
-				if ((SDL_GetTicks() - Timer) >= static_cast<Uint32>(m_Delay)) {
-					wait = false;
-					SDL_CondSignal(m_Cond);
-				}
+				SDL_CondSignal(m_Cond);
 			}
 		}
 		quit = m_Quit;

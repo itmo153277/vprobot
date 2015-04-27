@@ -42,25 +42,25 @@ CScene *vprobot::Scene(const Json::Value &SceneObject) {
 	size_t RobotsCount = SceneObject["robots_count"].asInt();
 
 	const int cMapTypes = 2;
-	static const char *MapAliases[cMapTypes] = {"Point", "Line"};
+	static const char *MapAliases[cMapTypes] = { "Point", "Line" };
 
 	function<CMap *()> MapConstructers[cMapTypes] = {
 			[&]() {return new CPointMap(SceneObject["map"]);},
-			[&]() {return new CLineMap(SceneObject["map"]);}};
+			[&]() {return new CLineMap(SceneObject["map"]);} };
 	const int cRobotTypes = 3;
-	static const char *RobotAliases[cRobotTypes] = {"WithExactPosition",
-			"WithPointsPosition", "WithScanner"};
+	static const char *RobotAliases[cRobotTypes] = { "WithExactPosition",
+			"WithPointsPosition", "WithScanner" };
 	function<CRobot *()> RobotConstructors[cRobotTypes] =
 			{
 					[&]() {return new CRobotWithExactPosition(SceneObject["robot"]);},
 					[&]() {return new CRobotWithPointsPosition(SceneObject["robot"], *Map);},
-					[&]() {return new CRobotWithScanner(SceneObject["robot"], *Map);}};
+					[&]() {return new CRobotWithScanner(SceneObject["robot"], *Map);} };
 	const int cControlSystemsTypes = 1;
 	static const char *ControlSystemAliases[cControlSystemsTypes] = {
-			"Sequential"};
+			"Sequential" };
 	function<CControlSystem *()> ControlSystemConstructors[cControlSystemsTypes] =
 			{
-					[&]() {return new CSequentialControlSystem(SceneObject["control_system"]);}};
+					[&]() {return new CSequentialControlSystem(SceneObject["control_system"]);} };
 
 	size_t i;
 	for (i = 0; i < cMapTypes; i++) {
@@ -113,7 +113,7 @@ CScene *vprobot::Scene(const Json::Value &SceneObject) {
 vprobot::scene::CNormalScene::CNormalScene(CMap *Map, RobotSet Robots,
 		CControlSystem *ControlSystem, const Json::Value &PresentationObject) :
 		m_Map(Map), m_Robots(Robots), m_ControlSystem(ControlSystem), m_Commands(
-		NULL), m_Time(0), m_Info(*this) {
+		NULL), m_Time(0), m_Status(m_Working), m_Info(*this) {
 	m_Measures = new const SMeasures *[m_Robots.size()];
 	m_Info.InitPresentations(PresentationObject);
 }
@@ -130,17 +130,24 @@ vprobot::scene::CNormalScene::~CNormalScene() {
 bool vprobot::scene::CNormalScene::Simulate() {
 	size_t i;
 
-	if (m_Commands != NULL) {
-		for (i = 0; i < m_Robots.size(); i++) {
-			m_Robots[i]->ExecuteCommand(m_Commands[i]);
+	if (m_Commands != NULL || m_Time == 0) {
+		if (m_Commands != NULL) {
+			for (i = 0; i < m_Robots.size(); i++) {
+				m_Robots[i]->ExecuteCommand(m_Commands[i]);
+			}
 		}
+		for (i = 0; i < m_Robots.size(); i++) {
+			m_Measures[i] = &(m_Robots[i]->Measure());
+		}
+		m_Time++;
+		m_Commands = NULL;
+		return true;
+	} else {
+		m_Commands = m_ControlSystem->GetCommands(m_Measures);
+		if (m_Commands == NULL)
+			m_Status = m_Stopped;
+		return m_Commands != NULL;
 	}
-	for (i = 0; i < m_Robots.size(); i++) {
-		m_Measures[i] = &(m_Robots[i]->Measure());
-	}
-	m_Commands = m_ControlSystem->GetCommands(m_Measures);
-	m_Time++;
-	return m_Commands != NULL;
 }
 
 /* Нарисовать презентацию */
@@ -184,10 +191,14 @@ void vprobot::scene::CNormalScene::CInfo::DrawPresentation(
 				255);
 		outstr.str(string());
 		outstr << "Status: ";
-		if (m_Scene.m_Time == 0 || m_Scene.m_Commands != NULL)
-			outstr << "Working";
-		else
-			outstr << "Stopped";
+		switch (m_Scene.m_Status) {
+			case m_Working:
+				outstr << "Working";
+				break;
+			case m_Stopped:
+				outstr << "Stopped";
+				break;
+		}
 		outstr << flush;
 		Driver.PutText(i_Params->x, i_Params->y + i_Params->dy,
 				outstr.str().c_str(), 0, 0, 0, 255);
