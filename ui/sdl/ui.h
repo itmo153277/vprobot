@@ -82,7 +82,7 @@ public:
 class CUI {
 public:
 	/* Тип для обработчика */
-	typedef std::function<bool()> HandlerFunction;
+	typedef std::function<void()> HandlerFunction;
 private:
 	/* Структура для экрана */
 	struct SScreen {
@@ -117,8 +117,8 @@ private:
 	bool m_Quit;
 	/* Условие перерисовки */
 	bool m_Redraw;
-	/* Первый проход */
-	bool m_FirstStart;
+	/* Условие ожидания */
+	bool m_Wait;
 	/* Функция обработки */
 	const HandlerFunction* m_HandlerFunction;
 	/* Выходить по окончании симуляции */

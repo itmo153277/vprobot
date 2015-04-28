@@ -104,15 +104,28 @@ public:
 
 /* Обработчик презентаций */
 class CPresentationHandler {
+public:
+	enum SimulationState {
+		SimulationEnd, SimulationWait, SimulationWorking
+	};
+protected:
+	SimulationState m_sState;
 private:
 	CPresentationHandler(const CPresentationHandler &Handler) = default;
 public:
-	CPresentationHandler() = default;
+	CPresentationHandler() :
+			m_sState(SimulationEnd) {
+	}
+	;
 	virtual ~CPresentationHandler() = default;
 
 	/* Нарисовать */
 	virtual void DrawPresentation(CPresentationDriver &Driver,
 			const std::string &Name) = 0;
+	/* Статус */
+	inline const SimulationState GetSimlationState() const {
+		return m_sState;
+	}
 };
 
 }

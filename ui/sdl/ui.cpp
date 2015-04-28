@@ -150,9 +150,8 @@ void ::vprobot::ui::CSDLPresentationDriver::ProjectToSurface() {
 
 ::vprobot::ui::CUI::CUI(CPresentationHandler &Handler,
 		const Json::Value &PresentationObject) :
-		m_Handler(Handler), m_ScreensSet(), m_Quit(false), m_Redraw(true), m_FirstStart(
-				true), m_HandlerFunction(
-		NULL) {
+		m_Handler(Handler), m_ScreensSet(), m_Quit(false), m_Redraw(false), m_Wait(
+				false), m_HandlerFunction(NULL) {
 	int i_w = PresentationObject["width"].asInt(), i_h =
 			PresentationObject["height"].asInt();
 
@@ -202,39 +201,41 @@ int ::vprobot::ui::CUI::ThreadFunction(void *data) {
 	return static_cast<CUI *>(data)->ThreadProcess();
 }
 int ::vprobot::ui::CUI::ThreadProcess() {
-	bool quit = false, wait = false;
+	bool quit = false;
+	CPresentationHandler::SimulationState i_State = CPresentationHandler::SimulationEnd;
 
-	for (;;) {
-		quit = !(*m_HandlerFunction)();
-		if (m_Delay > 0 && wait)
+	do {
+		if (i_State == CPresentationHandler::SimulationWait && m_Delay > 0)
 			SDL_Delay(m_Delay);
-		wait = !wait;
+		(*m_HandlerFunction)();
+		i_State = m_Handler.GetSimlationState();
 		SDL_LockMutex(m_MutexDraw);
-		if (quit && m_QuitOnStop)
+		if (i_State == CPresentationHandler::SimulationEnd && m_QuitOnStop)
 			m_Quit = true;
+		else if (i_State == CPresentationHandler::SimulationWait
+				&& m_Delay == 0) {
+			m_Wait = true;
+		}
 		if (m_Quit) {
 			SDL_UnlockMutex(m_MutexDraw);
 			break;
 		}
 		m_Redraw = true;
 		SDL_CondWait(m_Cond, m_MutexDraw);
-		m_FirstStart = false;
+		quit = m_Quit;
 		SDL_UnlockMutex(m_MutexDraw);
-		if (quit)
-			break;
-	}
+	} while (!quit);
 	return 0;
 }
 
 /* Обновление данных */
 void ::vprobot::ui::CUI::Process(const HandlerFunction &Function) {
-	bool wait = true, input = false, quit = false, wait2 = true;
+	bool input = false, quit = false, wait = false;
 	SDL_Thread *i_Thread;
 	FPSmanager manager;
 	SDL_Event e;
 
 	m_Redraw = false;
-	m_FirstStart = true;
 	m_HandlerFunction = &Function;
 	SDL_initFramerate(&manager);
 	i_Thread = SDL_CreateThread(ThreadFunction, "GUIThread",
@@ -244,7 +245,6 @@ void ::vprobot::ui::CUI::Process(const HandlerFunction &Function) {
 		SDL_LockMutex(m_MutexDraw);
 		if (m_Redraw) {
 			wait = true;
-			wait2 = !wait2;
 			SDL_SetRenderDrawColor(m_Renderer, 255, 255, 255, 255);
 			SDL_RenderClear(m_Renderer);
 			for (auto s : m_ScreensSet) {
@@ -274,17 +274,17 @@ void ::vprobot::ui::CUI::Process(const HandlerFunction &Function) {
 			}
 		}
 		if (wait) {
-			if (m_FirstStart) {
+			if (m_Quit) {
 				SDL_CondSignal(m_Cond);
-			} else if (m_Quit) {
-				SDL_CondSignal(m_Cond);
-			} else if (m_Delay == 0 && wait2) {
+			} else if (m_Wait) {
 				if (input) {
 					wait = false;
+					m_Wait = false;
 					input = false;
 					SDL_CondSignal(m_Cond);
 				}
 			} else {
+				wait = false;
 				SDL_CondSignal(m_Cond);
 			}
 		}

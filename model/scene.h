@@ -39,7 +39,7 @@ public:
 	virtual ~CScene() = default;
 
 	/* Выполнить симуляцию */
-	virtual bool Simulate() = 0;
+	virtual void Simulate() = 0;
 };
 
 }
