@@ -187,7 +187,7 @@ void vprobot::scene::CNormalScene::CInfo::DrawPresentation(
 	if (i_Params != NULL) {
 		stringstream outstr;
 
-		outstr << "Time: " << m_Scene.m_Time << flush;
+		outstr << "Simulation step: " << m_Scene.m_Time << flush;
 		Driver.PutText(i_Params->x, i_Params->y, outstr.str().c_str(), 0, 0, 0,
 				255);
 		outstr.str(string());

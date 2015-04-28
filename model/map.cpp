@@ -56,6 +56,14 @@ double vprobot::map::CPointMap::GetDistance(const Point &p, size_t index) {
 	return (p - m_List[index]).norm();
 }
 
+/* Отображаем данные */
+void vprobot::map::CPointMap::DrawPresentation(
+		const SPresentationParameters *Params, CPresentationDriver &Driver) {
+	for (auto p : m_List) {
+		Driver.DrawCircle(p[0], p[1], 0.3, 0, 0, 255, 255);
+	}
+}
+
 /* CLineMap */
 
 vprobot::map::CLineMap::CLineMap(const Json::Value &MapObject) :

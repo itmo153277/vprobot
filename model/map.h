@@ -57,6 +57,11 @@ private:
 	MapList m_List;
 
 	CPointMap(const CPointMap &Map) = default;
+protected:
+	/* Отображаем данные */
+	void DrawPresentation(
+			const vprobot::presentation::SPresentationParameters *Params,
+			vprobot::presentation::CPresentationDriver &Driver);
 public:
 	CPointMap(const Json::Value &MapObject);
 	~CPointMap();
