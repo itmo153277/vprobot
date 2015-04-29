@@ -202,11 +202,15 @@ int ::vprobot::ui::CUI::ThreadFunction(void *data) {
 }
 int ::vprobot::ui::CUI::ThreadProcess() {
 	bool quit = false;
-	CPresentationHandler::SimulationState i_State = CPresentationHandler::SimulationEnd;
+	CPresentationHandler::SimulationState i_State =
+			CPresentationHandler::SimulationEnd;
 
 	do {
-		if (i_State == CPresentationHandler::SimulationWait && m_Delay > 0)
-			SDL_Delay(m_Delay);
+		if (i_State == CPresentationHandler::SimulationWait && m_Delay > 0) {
+			SDL_LockMutex(m_MutexDraw);
+			SDL_CondWaitTimeout(m_Cond, m_MutexDraw, m_Delay);
+			SDL_UnlockMutex(m_MutexDraw);
+		}
 		(*m_HandlerFunction)();
 		i_State = m_Handler.GetSimlationState();
 		SDL_LockMutex(m_MutexDraw);
@@ -273,10 +277,10 @@ void ::vprobot::ui::CUI::Process(const HandlerFunction &Function) {
 					break;
 			}
 		}
-		if (wait) {
-			if (m_Quit) {
-				SDL_CondSignal(m_Cond);
-			} else if (m_Wait) {
+		if (m_Quit) {
+			SDL_CondSignal(m_Cond);
+		} else if (wait) {
+			if (m_Wait) {
 				if (input) {
 					wait = false;
 					m_Wait = false;
