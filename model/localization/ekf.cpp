@@ -17,3 +17,62 @@
  */
 
 #include "ekf.h"
+
+#include <cstddef>
+#include <cmath>
+
+using namespace ::std;
+using namespace ::vprobot::robot;
+using namespace ::vprobot::presentation;
+using namespace ::vprobot::control;
+using namespace ::vprobot::control::localization;
+
+/* CEKFLocalization */
+
+vprobot::control::localization::CEKFLocalization::CEKFLocalization(
+		const Json::Value &ControlSystemObject) :
+		CSequentialControlSystem(ControlSystemObject), m_States() {
+	m_Radius = ControlSystemObject["radius"].asDouble();
+	m_DRadius = ControlSystemObject["dradius"].asDouble();
+	m_Len = ControlSystemObject["len"].asDouble();
+	m_DLen = ControlSystemObject["dlen"].asDouble();
+	m_DAngle = ControlSystemObject["dangle"].asDouble();
+	m_DDist = ControlSystemObject["ddist"].asDouble();
+
+	Json::ArrayIndex i;
+	const Json::Value Params = ControlSystemObject["robot_params"];
+
+	for (i = 0; i < Params.size(); i++) {
+		StateSet::reverse_iterator ri;
+		const Json::Value i_Param = Params[i];
+
+		m_States.emplace_back();
+		ri = m_States.rbegin();
+		ri->s_MeanState << i_Param["x"].asDouble(), i_Param["y"].asDouble(), i_Param["angle"].asDouble();
+		ri->s_CovState << pow(i_Param["dx"].asDouble(), 2), 0, 0, 0, pow(
+				i_Param["dy"].asDouble(), 2), 0, 0, 0, pow(
+				i_Param["dangle"].asDouble(), 2);
+	}
+}
+
+vprobot::control::localization::CEKFLocalization::~CEKFLocalization() {
+}
+
+/* Отображаем данные */
+void vprobot::control::localization::CEKFLocalization::DrawPresentation(
+		const SPresentationParameters *Params, CPresentationDriver &Driver) {
+	Driver.PutText(2, 2, "Localization data here", 0, 0, 0, 255);
+}
+
+/* Обработка */
+void vprobot::control::localization::CEKFLocalization::Process(
+		const SMeasures * const *Measurements) {
+
+}
+
+/* Получить команду */
+const ControlCommand * const vprobot::control::localization::CEKFLocalization::GetCommands(
+		const SMeasures * const *Measurements) {
+	Process(Measurements);
+	return CSequentialControlSystem::GetCommands(Measurements);
+}

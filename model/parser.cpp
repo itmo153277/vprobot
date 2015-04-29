@@ -23,12 +23,15 @@
 #include <sstream>
 #include <functional>
 
+#include "localization/ekf.h"
+
 using namespace ::std;
 using namespace ::vprobot;
 using namespace ::vprobot::presentation;
 using namespace ::vprobot::map;
 using namespace ::vprobot::robot;
 using namespace ::vprobot::control;
+using namespace ::vprobot::control::localization;
 using namespace ::vprobot::scene;
 
 CScene *vprobot::Scene(const Json::Value &SceneObject) {
@@ -55,12 +58,13 @@ CScene *vprobot::Scene(const Json::Value &SceneObject) {
 					[&]() {return new CRobotWithExactPosition(SceneObject["robot"]);},
 					[&]() {return new CRobotWithPointsPosition(SceneObject["robot"], *Map);},
 					[&]() {return new CRobotWithScanner(SceneObject["robot"], *Map);}};
-	const int cControlSystemsTypes = 1;
+	const int cControlSystemsTypes = 2;
 	static const char *ControlSystemAliases[cControlSystemsTypes] = {
-			"Sequential"};
+			"Sequential", "EKF Localization"};
 	function<CControlSystem *()> ControlSystemConstructors[cControlSystemsTypes] =
 			{
-					[&]() {return new CSequentialControlSystem(SceneObject["control_system"]);}};
+					[&]() {return new CSequentialControlSystem(SceneObject["control_system"]);},
+					[&]() {return new CEKFLocalization(SceneObject["control_system"]);}};
 
 	size_t i;
 	for (i = 0; i < cMapTypes; i++) {
@@ -77,6 +81,8 @@ CScene *vprobot::Scene(const Json::Value &SceneObject) {
 			for (size_t j = RobotsCount; j > 0; j--) {
 				CRobot *r = RobotConstructors[i]();
 
+				r->SetState(
+						SceneObject["robot_states"][(Json::ArrayIndex) j - 1]);
 				r->InitPresentations(SceneObject["robot"]["presentations"]);
 				r->InitPresentations(
 						SceneObject["robot_presentations"][(Json::ArrayIndex) j

@@ -111,6 +111,8 @@ public:
 	void ExecuteCommand(const ControlCommand &Command);
 	/* Произвести измерения */
 	virtual const SMeasures &Measure() = 0;
+	/* Установить текущее состояние */
+	void SetState(const Json::Value &StateObject);
 };
 
 /* Робот, точно возвращающий позицию */

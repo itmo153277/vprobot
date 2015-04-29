@@ -34,12 +34,16 @@ using namespace ::vprobot::robot;
 
 vprobot::robot::CRobot::CRobot(const Json::Value &RobotObject) :
 		CPresentationProvider(), m_State() {
-	m_State.s_State << RobotObject["x"].asDouble(), RobotObject["y"].asDouble(), RobotObject["angle"].asDouble();
 	m_Radius = 1 / RobotObject["radius"].asDouble();
 	m_Length = RobotObject["len"].asDouble();
 }
 
 vprobot::robot::CRobot::~CRobot() {
+}
+
+/* Установить текущее состояние */
+void vprobot::robot::CRobot::SetState(const Json::Value &StateObject) {
+	m_State.s_State << StateObject["x"].asDouble(), StateObject["y"].asDouble(), StateObject["angle"].asDouble();
 }
 
 /* Выполнить команду */

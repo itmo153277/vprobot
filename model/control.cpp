@@ -28,7 +28,7 @@ using namespace ::vprobot::control;
 
 vprobot::control::CSequentialControlSystem::CSequentialControlSystem(
 		const Json::Value &ControlSystemObject) :
-		CControlSystem(), m_Set() {
+		CControlSystem(), m_Set(), m_LastCommand(NULL) {
 	Json::ArrayIndex i;
 	const Json::Value Commands = ControlSystemObject["commands"];
 
@@ -67,11 +67,10 @@ vprobot::control::CSequentialControlSystem::~CSequentialControlSystem() {
 const ControlCommand * const vprobot::control::CSequentialControlSystem::GetCommands(
 		const vprobot::robot::SMeasures * const *Measurements) {
 	if (m_Pos == m_Set.end())
-		return NULL;
+		m_LastCommand = NULL;
 	else {
-		ControlCommand *Ret = *m_Pos;
-
+		m_LastCommand = *m_Pos;
 		m_Pos++;
-		return Ret;
 	}
+	return m_LastCommand;
 }
