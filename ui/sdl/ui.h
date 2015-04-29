@@ -60,9 +60,12 @@ public:
 
 	/* Нарисовать точку */
 	void DrawCircle(double x, double y, double r, int R, int G, int B, int A);
+	/* Нарисовать угол */
+	void DrawPie(double x, double y, double r, double sa, double fa, int R,
+			int G, int B, int A);
 	/* Нарисовать элипс */
 	void DrawEllipse(double x, double y, double a, double b, double angle,
-			int R, int G, int B);
+			int R, int G, int B, int A);
 	/* Нарисовать фигуру */
 	void DrawShape(double *x, double *y, int count, int R, int G, int B, int A,
 			int f_R, int f_G, int f_B, int f_A);

@@ -65,7 +65,20 @@ vprobot::control::localization::CEKFLocalization::~CEKFLocalization() {
 /* Отображаем данные */
 void vprobot::control::localization::CEKFLocalization::DrawPresentation(
 		const SPresentationParameters *Params, CPresentationDriver &Driver) {
-	Driver.PutText(2, 2, "Localization data here", 0, 0, 0, 255);
+	for (auto s : m_States) {
+		Matrix2d cov = s.s_CovState.block<2, 2>(0, 0);
+		Vector2d x = s.s_MeanState.block<2, 1>(0, 0);
+		double da = 3 * sqrt(s.s_CovState.col(2)[2]);
+
+		Driver.DrawEllipse(x, cov, 255, 0, 0, 255);
+		if (GreaterThan(da, PI)) {
+			Driver.DrawCircle(x[0], x[1], 1, 0, 0, 255, 92);
+		} else {
+			Driver.DrawPie(x[0], x[1], 1, s.s_MeanState[2] - da,
+					s.s_MeanState[2] + da, 0, 0, 255, 92);
+		}
+		Driver.DrawCircle(x[0], x[1], 0.2, 255, 0, 0, 255);
+	}
 }
 
 /* Обработка */

@@ -71,28 +71,42 @@ void ::vprobot::ui::CSDLPresentationDriver::DrawCircle(double x, double y,
 		filledCircleRGBA(m_Renderer, r_x, r_y, r_r, R, G, B, A);
 }
 
+/* Нарисовать угол */
+void ::vprobot::ui::CSDLPresentationDriver::DrawPie(double x, double y,
+		double r, double sa, double fa, int R, int G, int B, int A) {
+	Sint16 r_x, r_y, r_r = static_cast<Uint16>(m_zoom * r), r_sa =
+			static_cast<Uint16>(-fa / PI * 180), r_fa = static_cast<Uint16>(-sa
+			/ PI * 180);
+
+	if (r_fa == r_sa)
+		r_fa++;
+	TranslateCoord(x, y, r_x, r_y);
+	if (r_r > 0 && A > 0)
+		filledPieRGBA(m_Renderer, r_x, r_y, r_r, r_sa, r_fa, R, G, B, A);
+}
+
 /* Нарисовать элипс */
 void ::vprobot::ui::CSDLPresentationDriver::DrawEllipse(double x, double y,
-		double a, double b, double angle, int R, int G, int B) {
+		double a, double b, double angle, int R, int G, int B, int A) {
 	Sint16 r_x, r_y, r_a, r_b, r_w, r_h;
 	SDL_Texture *aux;
 
 	r_a = static_cast<Sint16>(a * m_zoom);
 	r_b = static_cast<Sint16>(b * m_zoom);
 	TranslateCoord(x, y, r_x, r_y);
-	r_w = r_a * 2;
-	r_h = r_b * 2;
+	r_w = r_a * 2 + 2;
+	r_h = r_b * 2 + 2;
 	aux = SDL_CreateTexture(m_Renderer, SDL_PIXELFORMAT_ABGR8888,
 			SDL_TEXTUREACCESS_TARGET, r_w, r_h);
 	SDL_SetRenderTarget(m_Renderer, aux);
-	ellipseRGBA(m_Renderer, r_a, r_b, r_a, r_b, R, G, B, 255);
+	ellipseRGBA(m_Renderer, r_a, r_b, r_a, r_b, R, G, B, A);
 	SDL_SetRenderTarget(m_Renderer, m_Texture);
 
 	SDL_Point i_Center = {r_a, r_b};
-	SDL_Rect i_Rect = {r_x, r_y, r_w, r_h};
+	SDL_Rect i_Rect = {r_x - r_a, r_y - r_b, r_w, r_h};
 
-	SDL_RenderCopyEx(m_Renderer, aux, NULL, &i_Rect, -angle, &i_Center,
-			SDL_FLIP_NONE);
+	SDL_RenderCopyEx(m_Renderer, aux, NULL, &i_Rect, -angle / PI * 180,
+			&i_Center, SDL_FLIP_NONE);
 	SDL_DestroyTexture(aux);
 }
 
@@ -228,7 +242,7 @@ int ::vprobot::ui::CUI::ThreadProcess() {
 		SDL_CondWait(m_Cond, m_MutexDraw);
 		quit = m_Quit;
 		SDL_UnlockMutex(m_MutexDraw);
-	} while (!quit);
+	} while (!quit && i_State != CPresentationHandler::SimulationEnd);
 	return 0;
 }
 

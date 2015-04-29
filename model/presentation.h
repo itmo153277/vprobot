@@ -25,6 +25,7 @@
 
 #include <string>
 #include <vector>
+#include <Eigen/Dense>
 #include <json/json.h>
 
 namespace vprobot {
@@ -42,9 +43,15 @@ public:
 	/* Нарисовать точку */
 	virtual void DrawCircle(double x, double y, double r, int R, int G, int B,
 			int A) = 0;
-	/* Нарисовать элипс */
+	/* Нарисовать угол */
+	virtual void DrawPie(double x, double y, double r, double sa, double fa,
+			int R, int G, int B, int A) = 0;
+	/* Нарисовать эллипс */
 	virtual void DrawEllipse(double x, double y, double a, double b,
-			double angle, int R, int G, int B) = 0;
+			double angle, int R, int G, int B, int A) = 0;
+	/* Написовать эллипс по матрице */
+	void DrawEllipse(const Eigen::Vector2d &x, const Eigen::Matrix2d &sx, int R,
+			int G, int B, int A);
 	/* Нарисовать фигуру */
 	virtual void DrawShape(double *x, double *y, int count, int R, int G, int B,
 			int A, int f_R, int f_G, int f_B, int f_A) = 0;

@@ -18,8 +18,30 @@
 
 #include "presentation.h"
 
+#include <cmath>
+#include <Eigen/Eigenvalues>
+
+#include "../types.h"
+
 using namespace ::std;
+using namespace ::Eigen;
+using namespace ::vprobot;
 using namespace ::vprobot::presentation;
+
+/* CPresentationDriver */
+
+/* Написовать эллипс по матрице */
+void vprobot::presentation::CPresentationDriver::DrawEllipse(const Vector2d &x,
+		const Matrix2d &sx, int R, int G, int B, int A) {
+	EigenSolver<Matrix2d> es;
+
+	es.compute(sx, true);
+
+	Vector2cd ev = es.eigenvalues(), ev1 = es.eigenvectors().col(0);
+
+	DrawEllipse(x[0], x[1], 3 * sqrt(ev[0].real()), 3 * sqrt(ev[1].real()),
+			CorrectAngle(atan2(ev1[1].real(), ev1[0].real())), R, G, B, A);
+}
 
 /* CPresentationProvider */
 
