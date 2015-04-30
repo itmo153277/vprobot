@@ -25,6 +25,7 @@
 
 #include <cstddef>
 #include <string>
+#include <random>
 #include <Eigen/Dense>
 #include <json/json.h>
 #include "presentation.h"
@@ -92,8 +93,14 @@ protected:
 	SState m_State;
 	/* Радиус поворота */
 	double m_Radius;
+	/* Погрешность обратного радиуса */
+	double m_DRadius;
 	/* Длина перемещений */
 	double m_Length;
+	/* Погрешность перемещения */
+	double m_DLength;
+	/* Генератор случайных чисел */
+	std::default_random_engine m_Generator;
 
 	/* Парсинг параметров для экрана */
 	vprobot::presentation::SPresentationParameters *ParsePresentation(
@@ -141,6 +148,8 @@ private:
 	::vprobot::map::CMap &m_Map;
 	/* Колличество измерений */
 	std::size_t m_Count;
+	/* Погрешность измерения */
+	double m_DDist;
 public:
 	CRobotWithPointsPosition(const Json::Value &RobotObject,
 			::vprobot::map::CMap &Map);
@@ -171,6 +180,9 @@ private:
 	double m_MaxAngle;
 	/* Дальность */
 	double m_MaxLength;
+	/* Погрешность измерения */
+	double m_DDist;
+	double m_DAngle;
 
 	CRobotWithScanner(const CRobotWithScanner &Robot) = default;
 protected:

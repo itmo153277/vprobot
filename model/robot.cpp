@@ -33,9 +33,14 @@ using namespace ::vprobot::robot;
 /* CRobot */
 
 vprobot::robot::CRobot::CRobot(const Json::Value &RobotObject) :
-		CPresentationProvider(), m_State() {
+		CPresentationProvider(), m_State(), m_Generator() {
+	std::random_device rd;
+
+	m_Generator.seed(rd());
 	m_Radius = 1 / RobotObject["radius"].asDouble();
+	m_DRadius = RobotObject["dradius"].asDouble() / 3;
 	m_Length = RobotObject["len"].asDouble();
+	m_DLength = RobotObject["dlen"].asDouble() / 3;
 }
 
 vprobot::robot::CRobot::~CRobot() {
@@ -63,28 +68,32 @@ void vprobot::robot::CRobot::ExecuteCommand(const Control &Command) {
 
 void vprobot::robot::CRobot::ExecuteCommand(const ControlCommand &Command) {
 	Control Cmd;
+	normal_distribution<double> nd_len(m_Length, m_DLength);
+	normal_distribution<double> nd_rad(0, m_DRadius);
+	auto gen_len = bind(nd_len, m_Generator);
+	auto gen_rad = bind(nd_rad, m_Generator);
 
 	switch (Command) {
 		case Nothing:
 			Cmd << 0, 0;
 			break;
 		case Forward:
-			Cmd << m_Length, 0;
+			Cmd << gen_len(), gen_rad();
 			break;
 		case ForwardLeft:
-			Cmd << m_Length, m_Radius;
+			Cmd << gen_len(), m_Radius + gen_rad();
 			break;
 		case ForwardRight:
-			Cmd << m_Length, -m_Radius;
+			Cmd << gen_len(), -m_Radius + gen_rad();
 			break;
 		case Backward:
-			Cmd << -m_Length, 0;
+			Cmd << -gen_len(), gen_rad();
 			break;
 		case BackwardLeft:
-			Cmd << -m_Length, m_Radius;
+			Cmd << -gen_len(), m_Radius + gen_rad();
 			break;
 		case BackwardRight:
-			Cmd << -m_Length, -m_Radius;
+			Cmd << -gen_len(), -m_Radius + gen_rad();
 			break;
 	}
 	ExecuteCommand(Cmd);
@@ -138,6 +147,7 @@ vprobot::robot::CRobotWithPointsPosition::CRobotWithPointsPosition(
 		CRobot(RobotObject), m_Measure(), m_Map(Map) {
 	m_Count = RobotObject["points_count"].asInt();
 	m_Measure.Value.resize(m_Count);
+	m_DDist = RobotObject["ddist"].asDouble() / 3;
 }
 
 vprobot::robot::CRobotWithPointsPosition::~CRobotWithPointsPosition() {
@@ -147,9 +157,11 @@ vprobot::robot::CRobotWithPointsPosition::~CRobotWithPointsPosition() {
 const SMeasures &vprobot::robot::CRobotWithPointsPosition::Measure() {
 	size_t i;
 	Point r(m_State.s_State[0], m_State.s_State[1]);
+	normal_distribution<double> nd_dist(0, m_DDist);
+	auto gen_dist = bind(nd_dist, m_Generator);
 
 	for (i = 0; i < m_Count; i++) {
-		m_Measure.Value[i] = m_Map.GetDistance(r, i);
+		m_Measure.Value[i] = m_Map.GetDistance(r, i) + gen_dist();
 	}
 	return m_Measure;
 }
@@ -163,6 +175,8 @@ vprobot::robot::CRobotWithScanner::CRobotWithScanner(
 	m_Measure.Value.resize(m_Count);
 	m_MaxAngle = RobotObject["max_angle"].asDouble();
 	m_MaxLength = RobotObject["max_length"].asDouble();
+	m_DDist = RobotObject["ddist"].asDouble() / 3;
+	m_DAngle = RobotObject["dangle"].asDouble() / 3;
 }
 
 vprobot::robot::CRobotWithScanner::~CRobotWithScanner() {
@@ -220,12 +234,18 @@ const SMeasures &vprobot::robot::CRobotWithScanner::Measure() {
 	double angle = m_State.s_State[2] - m_MaxAngle, da = m_MaxAngle * 2
 			/ m_Count;
 	Point r(m_State.s_State[0], m_State.s_State[1]);
+	normal_distribution<double> nd_dist(0, m_DDist);
+	normal_distribution<double> nd_angle(0, m_DAngle);
+	auto gen_dist = bind(nd_dist, m_Generator);
+	auto gen_angle = bind(nd_angle, m_Generator);
 
 	for (i = 0; i < m_Count; i++, angle += da) {
-		double d = m_Map.GetDistance(r, angle);
+		double d = m_Map.GetDistance(r, angle + gen_angle());
 
 		if (GreaterThan(d, m_MaxLength))
 			d = 0;
+		if (!EqualsZero(d))
+			d += gen_dist();
 		m_Measure.Value[i] = d;
 	}
 	return m_Measure;

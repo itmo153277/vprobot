@@ -27,6 +27,7 @@
 #include <Eigen/Dense>
 #include <json/json.h>
 #include "../presentation.h"
+#include "../line.h"
 #include "../robot.h"
 #include "../control.h"
 
@@ -39,6 +40,11 @@ namespace localization {
 /* СУ с наблюдателем EKF */
 class CEKFLocalization: public CSequentialControlSystem {
 private:
+	typedef std::vector<line::Point> MapList;
+
+	/* Содержание карты */
+	MapList m_List;
+
 	/* Параметры робота */
 	/* Обратный радус поворота */
 	double m_Radius;

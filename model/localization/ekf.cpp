@@ -57,6 +57,14 @@ vprobot::control::localization::CEKFLocalization::CEKFLocalization(
 				i_Param["dy"].asDouble(), 2), 0, 0, 0, pow(
 				i_Param["dangle"].asDouble(), 2);
 	}
+
+	const Json::Value MapArray = ControlSystemObject["points"];
+
+	for (i = 0; i < MapArray.size(); i++) {
+		const Json::Value &p = MapArray[i];
+
+		m_List.emplace_back(p["x"].asDouble(), p["y"].asDouble());
+	}
 }
 
 vprobot::control::localization::CEKFLocalization::~CEKFLocalization() {
@@ -70,22 +78,28 @@ void vprobot::control::localization::CEKFLocalization::DrawPresentation(
 		Vector2d x = s.s_MeanState.block<2, 1>(0, 0);
 		double da = 3 * sqrt(s.s_CovState.col(2)[2]);
 
-		Driver.DrawEllipse(x, cov, 255, 0, 0, 255);
-		if (GreaterThan(da, PI)) {
-			Driver.DrawCircle(x[0], x[1], 1, 0, 0, 255, 92);
+		Driver.DrawEllipse(x, cov, 255, 0, 0, 64);
+		if (LessThan(da, 0.5)) {
+			Driver.DrawLine(s.s_MeanState[0], s.s_MeanState[1],
+					s.s_MeanState[0] + cos(s.s_MeanState[2]) * 0.5,
+					s.s_MeanState[1] + sin(s.s_MeanState[2]) * 0.5, 0, 0, 255,
+					255);
+		} else if (GreaterThan(da, PI)) {
+			Driver.DrawCircle(x[0], x[1], 0.8, 0, 0, 255, 92);
 		} else {
-			Driver.DrawPie(x[0], x[1], 1, s.s_MeanState[2] - da,
+			Driver.DrawPie(x[0], x[1], 0.8, s.s_MeanState[2] - da,
 					s.s_MeanState[2] + da, 0, 0, 255, 92);
 		}
-		Driver.DrawCircle(x[0], x[1], 0.2, 255, 0, 0, 255);
+		Driver.DrawCircle(x[0], x[1], 0.3, 255, 0, 0, 255);
 	}
 }
 
 /* Обработка */
 void vprobot::control::localization::CEKFLocalization::Process(
 		const SMeasures * const *Measurements) {
+	size_t i;
+
 	if (m_LastCommand != NULL) {
-		size_t i;
 		for (i = 0; i < m_Count; i++) {
 			if (m_LastCommand[i] == Nothing)
 				continue;
@@ -137,6 +151,46 @@ void vprobot::control::localization::CEKFLocalization::Process(
 					+ V * CovControl * V.transpose();
 			m_States[i].s_MeanState << m_States[i].s_MeanState[0] + dx, m_States[i].s_MeanState[1]
 					+ dy, nangle;
+		}
+	}
+	if (Measurements != NULL) {
+		for (i = 0; i < m_Count; i++) {
+			const SMeasuresPointsPosition *i_Measurement =
+					static_cast<const SMeasuresPointsPosition * const >(Measurements[i]);
+
+			if (i_Measurement == NULL)
+				continue;
+
+			int j;
+
+			for (j = 0; j < i_Measurement->Value.rows(); j++) {
+				Matrix<double, 1, 3> H;
+				double Q = m_DDist * m_DDist;
+				Vector3d K;
+
+				H
+						<< (m_States[i].s_MeanState[0] - m_List[j][0])
+								/ i_Measurement->Value[j], (m_States[i].s_MeanState[1]
+						- m_List[j][1]) / i_Measurement->Value[j], 0;
+				K = m_States[i].s_CovState * H.transpose()
+						/ (H * m_States[i].s_CovState * H.transpose() + Q);
+				m_States[i].s_MeanState +=
+						K
+								* (i_Measurement->Value[j]
+										- sqrt(
+												pow(
+														m_States[i].s_MeanState[0]
+																- m_List[j][0],
+														2)
+														+ pow(
+																m_States[i].s_MeanState[1]
+																		- m_List[j][1],
+																2)));
+				Matrix3d OldCov = m_States[i].s_CovState;
+
+				m_States[i].s_CovState = (Matrix3d::Identity() - K * H)
+						* OldCov;
+			}
 		}
 	}
 }

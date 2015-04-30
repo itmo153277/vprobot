@@ -96,15 +96,17 @@ void ::vprobot::ui::CSDLPresentationDriver::DrawEllipse(double x, double y,
 	TranslateCoord(x, y, r_x, r_y);
 	r_w = r_a * 2 + 2;
 	r_h = r_b * 2 + 2;
-	aux = SDL_CreateTexture(m_Renderer, SDL_PIXELFORMAT_ABGR8888,
+	aux = SDL_CreateTexture(m_Renderer, SDL_PIXELFORMAT_RGBA8888,
 			SDL_TEXTUREACCESS_TARGET, r_w, r_h);
 	SDL_SetRenderTarget(m_Renderer, aux);
-	ellipseRGBA(m_Renderer, r_a, r_b, r_a, r_b, R, G, B, A);
+	filledEllipseRGBA(m_Renderer, r_a, r_b, r_a, r_b, R, G, B, 255);
 	SDL_SetRenderTarget(m_Renderer, m_Texture);
 
 	SDL_Point i_Center = {r_a, r_b};
 	SDL_Rect i_Rect = {r_x - r_a, r_y - r_b, r_w, r_h};
 
+	SDL_SetTextureAlphaMod(aux, A);
+	SDL_SetTextureBlendMode(aux, SDL_BLENDMODE_NONE);
 	SDL_RenderCopyEx(m_Renderer, aux, NULL, &i_Rect, -angle / PI * 180,
 			&i_Center, SDL_FLIP_NONE);
 	SDL_DestroyTexture(aux);
@@ -153,6 +155,7 @@ void ::vprobot::ui::CSDLPresentationDriver::PutText(double x, double y,
 
 /* Проецировать на экран */
 void ::vprobot::ui::CSDLPresentationDriver::ProjectToSurface() {
+	SDL_SetTextureBlendMode(m_Texture, SDL_BLENDMODE_BLEND);
 	SDL_RenderCopy(m_Renderer, m_Texture, NULL, &m_Rect);
 	SDL_SetRenderDrawColor(m_Renderer, 0, 0, 0, 255);
 	SDL_RenderDrawRect(m_Renderer, &m_Rect);
