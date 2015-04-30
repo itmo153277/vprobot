@@ -163,32 +163,29 @@ void vprobot::control::localization::CEKFLocalization::Process(
 			if (i_Measurement == NULL)
 				continue;
 
+			MatrixXd H(i_Measurement->Value.rows(), 3);
+			MatrixXd K(3, i_Measurement->Value.rows());
+			VectorXd h(i_Measurement->Value.rows());
+			Matrix3d OldCov = m_States[i].s_CovState;
 			int j;
 
 			for (j = 0; j < i_Measurement->Value.rows(); j++) {
-				Matrix<double, 1, 3> H;
-				double Q = m_DDist * m_DDist;
-				Vector3d K;
-
-				H
+				H.row(j)
 						<< (m_States[i].s_MeanState[0] - m_List[j][0])
 								/ i_Measurement->Value[j], (m_States[i].s_MeanState[1]
 						- m_List[j][1]) / i_Measurement->Value[j], 0;
-				K = m_States[i].s_CovState * H.transpose()
-						/ (H * m_States[i].s_CovState * H.transpose() + Q);
-
-				Matrix3d OldCov = m_States[i].s_CovState;
-				Vector3d OldMean = m_States[i].s_MeanState;
-
-				m_States[i].s_MeanState += K
-						* (i_Measurement->Value[j]
-								- sqrt(
-										pow(OldMean[0] - m_List[j][0], 2)
-												+ pow(OldMean[1] - m_List[j][1],
-														2)));
-				m_States[i].s_CovState = (Matrix3d::Identity() - K * H)
-						* OldCov;
+				h[j] = sqrt(
+						pow(m_States[i].s_MeanState[0] - m_List[j][0], 2)
+								+ pow(m_States[i].s_MeanState[1] - m_List[j][1],
+										2));
 			}
+			K = OldCov * H.transpose()
+					* (H * OldCov * H.transpose()
+							+ MatrixXd::Identity(H.rows(), H.rows())
+									* (m_DDist * m_DDist)).inverse();
+
+			m_States[i].s_MeanState += K * (i_Measurement->Value - h);
+			m_States[i].s_CovState = (Matrix3d::Identity() - K * H) * OldCov;
 		}
 	}
 }
