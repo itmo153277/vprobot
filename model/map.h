@@ -51,7 +51,7 @@ public:
 /* Карта, содержащая маяки */
 class CPointMap: public CMap {
 private:
-	typedef std::vector<line::Point> MapList;
+	typedef std::vector<line::Point, Eigen::aligned_allocator<line::Point>> MapList;
 
 	/* Содержание карты */
 	MapList m_List;

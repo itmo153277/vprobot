@@ -40,7 +40,7 @@ namespace localization {
 /* СУ с наблюдателем EKF */
 class CEKFLocalization: public CSequentialControlSystem {
 private:
-	typedef std::vector<line::Point> MapList;
+	typedef std::vector<line::Point, Eigen::aligned_allocator<line::Point>> MapList;
 
 	/* Содержание карты */
 	MapList m_List;
@@ -54,8 +54,6 @@ private:
 	double m_Len;
 	/* Погрешность перемещения */
 	double m_DLen;
-	/* Погрешность по углу */
-	double m_DAngle;
 	/* Погрешность по дистанции */
 	double m_DDist;
 

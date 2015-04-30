@@ -37,11 +37,10 @@ vprobot::control::localization::CEKFLocalization::CEKFLocalization(
 		const Json::Value &ControlSystemObject) :
 		CSequentialControlSystem(ControlSystemObject), m_States() {
 	m_Radius = 1 / ControlSystemObject["radius"].asDouble();
-	m_DRadius = ControlSystemObject["dradius"].asDouble();
+	m_DRadius = ControlSystemObject["dradius"].asDouble() / 3;
 	m_Len = ControlSystemObject["len"].asDouble();
-	m_DLen = ControlSystemObject["dlen"].asDouble();
-	m_DAngle = ControlSystemObject["dangle"].asDouble();
-	m_DDist = ControlSystemObject["ddist"].asDouble();
+	m_DLen = ControlSystemObject["dlen"].asDouble() / 3;
+	m_DDist = ControlSystemObject["ddist"].asDouble() / 3;
 
 	Json::ArrayIndex i;
 	const Json::Value Params = ControlSystemObject["robot_params"];
@@ -53,9 +52,9 @@ vprobot::control::localization::CEKFLocalization::CEKFLocalization(
 		m_States.emplace_back();
 		ri = m_States.rbegin();
 		ri->s_MeanState << i_Param["x"].asDouble(), i_Param["y"].asDouble(), i_Param["angle"].asDouble();
-		ri->s_CovState << pow(i_Param["dx"].asDouble(), 2), 0, 0, 0, pow(
-				i_Param["dy"].asDouble(), 2), 0, 0, 0, pow(
-				i_Param["dangle"].asDouble(), 2);
+		ri->s_CovState << pow(i_Param["dx"].asDouble() / 3, 2), 0, 0, 0, pow(
+				i_Param["dy"].asDouble() / 3, 2), 0, 0, 0, pow(
+				i_Param["dangle"].asDouble() / 3, 2);
 	}
 
 	const Json::Value MapArray = ControlSystemObject["points"];
@@ -79,10 +78,10 @@ void vprobot::control::localization::CEKFLocalization::DrawPresentation(
 		double da = 3 * sqrt(s.s_CovState.col(2)[2]);
 
 		Driver.DrawEllipse(x, cov, 255, 0, 0, 64);
-		if (LessThan(da, 0.5)) {
+		if (LessThan(da, 0.1)) {
 			Driver.DrawLine(s.s_MeanState[0], s.s_MeanState[1],
-					s.s_MeanState[0] + cos(s.s_MeanState[2]) * 0.5,
-					s.s_MeanState[1] + sin(s.s_MeanState[2]) * 0.5, 0, 0, 255,
+					s.s_MeanState[0] + cos(s.s_MeanState[2]) * 0.8,
+					s.s_MeanState[1] + sin(s.s_MeanState[2]) * 0.8, 0, 0, 255,
 					255);
 		} else if (GreaterThan(da, PI)) {
 			Driver.DrawCircle(x[0], x[1], 0.8, 0, 0, 255, 92);
@@ -147,16 +146,19 @@ void vprobot::control::localization::CEKFLocalization::Process(
 			}
 			G << 1, 0, -dy, 0, 1, dx, 0, 0, 1;
 			CovControl << m_DLen * m_DLen, 0, 0, m_DRadius * m_DRadius;
-			m_States[i].s_CovState = G * m_States[i].s_CovState * G.transpose()
+
+			Matrix3d OldCov = m_States[i].s_CovState;
+			Vector3d OldMean = m_States[i].s_MeanState;
+
+			m_States[i].s_CovState = G * OldCov * G.transpose()
 					+ V * CovControl * V.transpose();
-			m_States[i].s_MeanState << m_States[i].s_MeanState[0] + dx, m_States[i].s_MeanState[1]
-					+ dy, nangle;
+			m_States[i].s_MeanState << OldMean[0] + dx, OldMean[1] + dy, nangle;
 		}
 	}
 	if (Measurements != NULL) {
 		for (i = 0; i < m_Count; i++) {
 			const SMeasuresPointsPosition *i_Measurement =
-					static_cast<const SMeasuresPointsPosition * const >(Measurements[i]);
+					dynamic_cast<const SMeasuresPointsPosition *>(Measurements[i]);
 
 			if (i_Measurement == NULL)
 				continue;
@@ -174,20 +176,16 @@ void vprobot::control::localization::CEKFLocalization::Process(
 						- m_List[j][1]) / i_Measurement->Value[j], 0;
 				K = m_States[i].s_CovState * H.transpose()
 						/ (H * m_States[i].s_CovState * H.transpose() + Q);
-				m_States[i].s_MeanState +=
-						K
-								* (i_Measurement->Value[j]
-										- sqrt(
-												pow(
-														m_States[i].s_MeanState[0]
-																- m_List[j][0],
-														2)
-														+ pow(
-																m_States[i].s_MeanState[1]
-																		- m_List[j][1],
-																2)));
-				Matrix3d OldCov = m_States[i].s_CovState;
 
+				Matrix3d OldCov = m_States[i].s_CovState;
+				Vector3d OldMean = m_States[i].s_MeanState;
+
+				m_States[i].s_MeanState += K
+						* (i_Measurement->Value[j]
+								- sqrt(
+										pow(OldMean[0] - m_List[j][0], 2)
+												+ pow(OldMean[1] - m_List[j][1],
+														2)));
 				m_States[i].s_CovState = (Matrix3d::Identity() - K * H)
 						* OldCov;
 			}

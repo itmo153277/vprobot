@@ -38,7 +38,7 @@ namespace robot {
 
 /* Базовый класс для измерений */
 struct SMeasures {
-
+	virtual ~SMeasures() = default;
 };
 
 /* Измеряем точное положение робота */

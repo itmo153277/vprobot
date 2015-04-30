@@ -116,8 +116,8 @@ void vprobot::robot::CRobot::DrawPresentation(
 
 	if (i_Params != NULL && i_Params->m_OutType == "Position") {
 		Driver.DrawLine(m_State.s_State[0], m_State.s_State[1],
-				m_State.s_State[0] + cos(m_State.s_State[2]) * 0.5,
-				m_State.s_State[1] + sin(m_State.s_State[2]) * 0.5, 0, 0, 255,
+				m_State.s_State[0] + cos(m_State.s_State[2]) * 0.8,
+				m_State.s_State[1] + sin(m_State.s_State[2]) * 0.8, 0, 0, 255,
 				255);
 		Driver.DrawCircle(m_State.s_State[0], m_State.s_State[1], 0.3, 255, 0,
 				0, 255);
