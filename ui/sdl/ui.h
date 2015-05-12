@@ -72,6 +72,9 @@ public:
 	/* Нарисовать линию */
 	void DrawLine(double x0, double y0, double xf, double yf, int R, int G,
 			int B, int A);
+	/* Нарисовать квадрат */
+	void DrawRectangle(double x0, double y0, double xf, double yf, int R, int G,
+			int B, int A);
 	/* Написать текст */
 	void PutText(double x, double y, const char *Text, int R, int G, int B,
 			int A);

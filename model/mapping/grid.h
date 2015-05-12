@@ -62,6 +62,8 @@ private:
 	double m_MapHeight;
 	std::size_t m_NumWidth;
 	std::size_t m_NumHeight;
+	double m_StartX;
+	double m_StartY;
 	/* Набор карт */
 	MapSet m_MapSet;
 

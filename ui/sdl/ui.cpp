@@ -143,6 +143,22 @@ void ::vprobot::ui::CSDLPresentationDriver::DrawLine(double x0, double y0,
 		lineRGBA(m_Renderer, r_x0, r_y0, r_xf, r_yf, R, G, B, A);
 }
 
+/* Нарисовать квадрат */
+void ::vprobot::ui::CSDLPresentationDriver::DrawRectangle(double x0, double y0,
+		double xf, double yf, int R, int G, int B, int A) {
+	Sint16 r_x[4], r_y[4];
+
+	TranslateCoord(x0, y0, r_x[0], r_y[0]);
+	TranslateCoord(xf, yf, r_x[2], r_y[2]);
+	r_x[1] = r_x[0];
+	r_y[1] = r_y[2];
+	r_x[3] = r_x[2];
+	r_y[3] = r_y[0];
+	if (A > 0) {
+		filledPolygonRGBA(m_Renderer, r_x, r_y, 4, R, G, B, A);
+	}
+}
+
 /* Написать текст */
 void ::vprobot::ui::CSDLPresentationDriver::PutText(double x, double y,
 		const char *Text, int R, int G, int B, int A) {

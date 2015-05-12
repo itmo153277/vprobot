@@ -49,6 +49,8 @@ vprobot::control::mapping::CGridMapper::CGridMapper(
 	m_MapHeight = ControlSystemObject["map_height"].asDouble();
 	m_NumWidth = ControlSystemObject["num_width"].asInt();
 	m_NumHeight = ControlSystemObject["num_height"].asInt();
+	m_StartX = ControlSystemObject["start_x"].asDouble();
+	m_StartY = ControlSystemObject["start_y"].asDouble();
 
 	size_t i;
 	const Json::Value Params = ControlSystemObject["robot_params"];
@@ -58,7 +60,7 @@ vprobot::control::mapping::CGridMapper::CGridMapper(
 
 		m_MapSet.push_back(GridMap::Zero(m_NumWidth, m_NumHeight));
 		m_States.emplace_back();
-		m_States.rbegin()->s_MeanState << RobotParams["x"].asDouble(), RobotParams["y"].asDouble(), RobotParams["angle"].asDouble();
+		m_States[i].s_MeanState << RobotParams["x"].asDouble(), RobotParams["y"].asDouble(), RobotParams["angle"].asDouble();
 	}
 }
 
@@ -120,6 +122,41 @@ const ControlCommand * const vprobot::control::mapping::CGridMapper::GetCommands
 
 				if (i_Measurement == NULL)
 					continue;
+
+				double da = m_MaxAngle * 2 / i_Measurement->Value.rows(), dx =
+						m_MapWidth / m_NumWidth, dy = m_MapHeight / m_NumHeight,
+						dd = sqrt(dx * dx + dy * dy);
+				size_t x, y, j;
+
+				for (x = 0; x < m_NumWidth; x++)
+					for (y = 0; y < m_NumHeight; y++) {
+						double cx = dx * (x + 0.5) + m_StartX
+								- m_States[i].s_MeanState[0], cy = dy
+								* (y + 0.5) + m_StartY
+								- m_States[i].s_MeanState[1], nangle;
+						int nx;
+
+						nangle = atan2(cy, cx);
+						nx = static_cast<int>((CorrectAngle(
+								nangle - m_States[i].s_MeanState[2])
+								+ m_MaxAngle) / da);
+						if (nx >= 0 && nx < i_Measurement->Value.rows()) {
+							double md, d = i_Measurement->Value[nx], cd = sqrt(
+									cx * cx + cy * cy);
+
+							if (EqualsZero(d)) {
+								md = 0;
+								d = m_MaxLength;
+							} else
+								md = d + dd;
+							if (LessOrEquals(cd, d)) {
+								m_MapSet[i].row(x)[y] += m_Free;
+							} else if (LessOrEquals(cd, md)) {
+								m_MapSet[i].row(x)[y] += m_Occ;
+							}
+						}
+
+					}
 			}
 		}
 	}
@@ -146,5 +183,18 @@ void vprobot::control::mapping::CGridMapper::DrawPresentation(
 			for (auto m : m_MapSet)
 				OutMap += m;
 		}
+
+		size_t i, j;
+		double dx = m_MapWidth / m_NumWidth, dy = m_MapHeight / m_NumHeight, cx,
+				cy;
+
+		for (i = 0, cx = 0; i < m_NumWidth; i++, cx += dx)
+			for (j = 0, cy = 0; j < m_NumHeight; j++, cy += dy) {
+				double l = exp(OutMap.row(i)[j]);
+				int val = 255 - static_cast<int>(255 * l / (1 + l));
+
+				Driver.DrawRectangle(cx, cy, cx + dx, cy + dy, val, val, val,
+						255);
+			}
 	}
 }
