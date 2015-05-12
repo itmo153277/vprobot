@@ -16,18 +16,19 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __LOC_EKF_H_
-#define __LOC_EKF_H_
+#ifndef __MAP_GRID_H_
+#define __MAP_GRID_H_
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
+#include <cstddef>
 #include <vector>
+#include <string>
 #include <Eigen/Dense>
 #include <json/json.h>
 #include "../presentation.h"
-#include "../line.h"
 #include "../robot.h"
 #include "../control.h"
 
@@ -35,52 +36,65 @@ namespace vprobot {
 
 namespace control {
 
-namespace localization {
+namespace mapping {
 
-/* СУ с наблюдателем EKF */
-class CEKFLocalization: public CSequentialControlSystem {
+/* СУ с графической картой */
+class CGridMapper: public CSequentialControlSystem {
+public:
+	/* Графическая карта */
+	typedef Eigen::MatrixXd GridMap;
+	/* Набор карт */
+	typedef std::vector<GridMap> MapSet;
 private:
-	typedef std::vector<line::Point, Eigen::aligned_allocator<line::Point>> MapList;
-
-	/* Содержание карты */
-	MapList m_List;
-
-	/* Параметры робота */
 	/* Обратный радус поворота */
 	double m_Radius;
-	/* Погрешность радиуса */
-	double m_DRadius;
 	/* Длина перемещения */
 	double m_Len;
-	/* Погрешность перемещения */
-	double m_DLen;
-	/* Погрешность по дистанции */
-	double m_DDist;
+	/* Угол отклонения */
+	double m_MaxAngle;
+	/* Дальность */
+	double m_MaxLength;
+	/* Значения для обновления карты */
+	double m_Occ;
+	double m_Free;
+	/* Размеры карты */
+	double m_MapWidth;
+	double m_MapHeight;
+	std::size_t m_NumWidth;
+	std::size_t m_NumHeight;
+	/* Набор карт */
+	MapSet m_MapSet;
 
-	/* Состояния для каждого робота */
+	/* Состояния роботов */
 	struct SState {
 		EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-		/* Мат ожидание состояния */
 		Eigen::Vector3d s_MeanState;
-		/* Матрица ковариаций */
-		Eigen::Matrix3d s_CovState;
 	};
 	typedef std::vector<SState> StateSet;
 	StateSet m_States;
 
-	/* Функция обработки */
-	void Process(const vprobot::robot::SMeasures * const *Measurements);
+	/* Вывод данных */
+	struct SGridPresentationPrameters: public vprobot::presentation::SPresentationParameters {
+		std::size_t m_Num;
 
-	CEKFLocalization(const CEKFLocalization &ControlSystem) = default;
+		SGridPresentationPrameters(const std::size_t Num) :
+				m_Num(Num) {
+		}
+	};
+
+	CGridMapper(const CGridMapper &GridMapper) = default;
 protected:
+	/* Парсинг параметров для экрана */
+	vprobot::presentation::SPresentationParameters *ParsePresentation(
+			const Json::Value &PresentationObject);
 	/* Отображаем данные */
 	void DrawPresentation(
 			const vprobot::presentation::SPresentationParameters *Params,
 			vprobot::presentation::CPresentationDriver &Driver);
 public:
-	CEKFLocalization(const Json::Value &ControlSystemObject);
-	~CEKFLocalization();
+	CGridMapper(const Json::Value &ControlSystemObject);
+	~CGridMapper();
 
 	/* Получить команду */
 	const vprobot::robot::ControlCommand * const GetCommands(

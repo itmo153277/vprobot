@@ -102,7 +102,8 @@ libvprmodel_a_LIBADD =
 am__dirstamp = $(am__leading_dot)dirstamp
 am_libvprmodel_a_OBJECTS = control.$(OBJEXT) line.$(OBJEXT) \
 	map.$(OBJEXT) parser.$(OBJEXT) presentation.$(OBJEXT) \
-	robot.$(OBJEXT) localization/ekf.$(OBJEXT)
+	robot.$(OBJEXT) localization/ekf.$(OBJEXT) \
+	mapping/grid.$(OBJEXT)
 libvprmodel_a_OBJECTS = $(am_libvprmodel_a_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -276,8 +277,8 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 noinst_LIBRARIES = libvprmodel.a
-libvprmodel_a_SOURCES = control.cpp line.cpp map.cpp parser.cpp presentation.cpp robot.cpp localization/ekf.cpp
-noinst_HEADERS = control.h line.h map.h parser.h presentation.h robot.h scene.h localization/ekf.h
+libvprmodel_a_SOURCES = control.cpp line.cpp map.cpp parser.cpp presentation.cpp robot.cpp localization/ekf.cpp mapping/grid.cpp
+noinst_HEADERS = control.h line.h map.h parser.h presentation.h robot.h scene.h localization/ekf.h mapping/grid.h
 all: all-am
 
 .SUFFIXES:
@@ -323,6 +324,14 @@ localization/$(DEPDIR)/$(am__dirstamp):
 	@: > localization/$(DEPDIR)/$(am__dirstamp)
 localization/ekf.$(OBJEXT): localization/$(am__dirstamp) \
 	localization/$(DEPDIR)/$(am__dirstamp)
+mapping/$(am__dirstamp):
+	@$(MKDIR_P) mapping
+	@: > mapping/$(am__dirstamp)
+mapping/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) mapping/$(DEPDIR)
+	@: > mapping/$(DEPDIR)/$(am__dirstamp)
+mapping/grid.$(OBJEXT): mapping/$(am__dirstamp) \
+	mapping/$(DEPDIR)/$(am__dirstamp)
 
 libvprmodel.a: $(libvprmodel_a_OBJECTS) $(libvprmodel_a_DEPENDENCIES) $(EXTRA_libvprmodel_a_DEPENDENCIES) 
 	$(AM_V_at)-rm -f libvprmodel.a
@@ -332,6 +341,7 @@ libvprmodel.a: $(libvprmodel_a_OBJECTS) $(libvprmodel_a_DEPENDENCIES) $(EXTRA_li
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
 	-rm -f localization/*.$(OBJEXT)
+	-rm -f mapping/*.$(OBJEXT)
 
 distclean-compile:
 	-rm -f *.tab.c
@@ -343,6 +353,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/presentation.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/robot.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@localization/$(DEPDIR)/ekf.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@mapping/$(DEPDIR)/grid.Po@am__quote@
 
 .cpp.o:
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
@@ -474,6 +485,8 @@ distclean-generic:
 	-test . = "$(srcdir)" || test -z "$(CONFIG_CLEAN_VPATH_FILES)" || rm -f $(CONFIG_CLEAN_VPATH_FILES)
 	-rm -f localization/$(DEPDIR)/$(am__dirstamp)
 	-rm -f localization/$(am__dirstamp)
+	-rm -f mapping/$(DEPDIR)/$(am__dirstamp)
+	-rm -f mapping/$(am__dirstamp)
 
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
@@ -483,7 +496,7 @@ clean: clean-am
 clean-am: clean-generic clean-noinstLIBRARIES mostlyclean-am
 
 distclean: distclean-am
-	-rm -rf ./$(DEPDIR) localization/$(DEPDIR)
+	-rm -rf ./$(DEPDIR) localization/$(DEPDIR) mapping/$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-tags
@@ -529,7 +542,7 @@ install-ps-am:
 installcheck-am:
 
 maintainer-clean: maintainer-clean-am
-	-rm -rf ./$(DEPDIR) localization/$(DEPDIR)
+	-rm -rf ./$(DEPDIR) localization/$(DEPDIR) mapping/$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 
