@@ -81,15 +81,14 @@ CScene *vprobot::Scene(const Json::Value &SceneObject) {
 		return NULL;
 	for (i = 0; i < cRobotTypes; i++) {
 		if (RobotType == RobotAliases[i]) {
-			for (size_t j = RobotsCount; j > 0; j--) {
+			for (size_t j = 0; j < RobotsCount; j++) {
 				CRobot *r = RobotConstructors[i]();
 
 				r->SetState(
-						SceneObject["robot_states"][(Json::ArrayIndex) j - 1]);
+						SceneObject["robot_states"][static_cast<Json::ArrayIndex>(j)]);
 				r->InitPresentations(SceneObject["robot"]["presentations"]);
 				r->InitPresentations(
-						SceneObject["robot_presentations"][(Json::ArrayIndex) j
-								- 1]);
+						SceneObject["robot_presentations"][static_cast<Json::ArrayIndex>(j)]);
 				Robots.push_back(r);
 			}
 			break;

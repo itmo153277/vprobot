@@ -126,7 +126,7 @@ const ControlCommand * const vprobot::control::mapping::CGridMapper::GetCommands
 				double da = m_MaxAngle * 2 / i_Measurement->Value.rows(), dx =
 						m_MapWidth / m_NumWidth, dy = m_MapHeight / m_NumHeight,
 						dd = sqrt(dx * dx + dy * dy);
-				size_t x, y, j;
+				size_t x, y;
 
 				for (x = 0; x < m_NumWidth; x++)
 					for (y = 0; y < m_NumHeight; y++) {
