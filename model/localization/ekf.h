@@ -77,6 +77,7 @@ protected:
 	/* Отображаем данные */
 	void DrawPresentation(
 			const vprobot::presentation::SPresentationParameters *Params,
+			double IndicatorZoom,
 			vprobot::presentation::CPresentationDriver &Driver);
 public:
 	CEKFLocalization(const Json::Value &ControlSystemObject);

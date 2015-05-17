@@ -58,9 +58,10 @@ double vprobot::map::CPointMap::GetDistance(const Point &p, size_t index) {
 
 /* Отображаем данные */
 void vprobot::map::CPointMap::DrawPresentation(
-		const SPresentationParameters *Params, CPresentationDriver &Driver) {
+		const SPresentationParameters *Params, double IndicatorZoom,
+		CPresentationDriver &Driver) {
 	for (auto p : m_List) {
-		Driver.DrawCircle(p[0], p[1], 0.3, 0, 0, 255, 255);
+		Driver.DrawCircle(p[0], p[1], 0.3 * IndicatorZoom, 0, 0, 255, 255);
 	}
 }
 
@@ -116,7 +117,8 @@ double vprobot::map::CLineMap::GetDistance(const Point &p, size_t index) {
 
 /* Отображаем данные */
 void vprobot::map::CLineMap::DrawPresentation(
-		const SPresentationParameters *Params, CPresentationDriver &Driver) {
+		const SPresentationParameters *Params, double IndicatorZoom,
+		CPresentationDriver &Driver) {
 	for (auto l : m_List) {
 		size_t i;
 		Line::const_iterator cl = l.begin();

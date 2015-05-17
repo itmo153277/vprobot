@@ -110,17 +110,20 @@ SPresentationParameters *vprobot::robot::CRobot::ParsePresentation(
 }
 
 void vprobot::robot::CRobot::DrawPresentation(
-		const SPresentationParameters *Params, CPresentationDriver &Driver) {
+		const SPresentationParameters *Params, double IndicatorZoom,
+		CPresentationDriver &Driver) {
 	const SRobotPresentationPrameters *i_Params =
 			dynamic_cast<const SRobotPresentationPrameters *>(Params);
 
 	if (i_Params != NULL && i_Params->m_OutType == "Position") {
 		Driver.DrawLine(m_State.s_State[0], m_State.s_State[1],
-				m_State.s_State[0] + cos(m_State.s_State[2]) * 0.8,
-				m_State.s_State[1] + sin(m_State.s_State[2]) * 0.8, 0, 0, 255,
-				255);
-		Driver.DrawCircle(m_State.s_State[0], m_State.s_State[1], 0.3, 255, 0,
-				0, 255);
+				m_State.s_State[0]
+						+ cos(m_State.s_State[2]) * 0.8 * IndicatorZoom,
+				m_State.s_State[1]
+						+ sin(m_State.s_State[2]) * 0.8 * IndicatorZoom, 0, 0,
+				255, 255);
+		Driver.DrawCircle(m_State.s_State[0], m_State.s_State[1],
+				0.3 * IndicatorZoom, 255, 0, 0, 255);
 	}
 }
 
@@ -193,7 +196,8 @@ SPresentationParameters *vprobot::robot::CRobotWithScanner::ParsePresentation(
 }
 
 void vprobot::robot::CRobotWithScanner::DrawPresentation(
-		const SPresentationParameters *Params, CPresentationDriver &Driver) {
+		const SPresentationParameters *Params, double IndicatorZoom,
+		CPresentationDriver &Driver) {
 	const SRobotPresentationPrameters *i_Params =
 			dynamic_cast<const SRobotPresentationPrameters *>(Params);
 
@@ -218,14 +222,15 @@ void vprobot::robot::CRobotWithScanner::DrawPresentation(
 		for (i = 0; i < m_Count; i++) {
 			if (EqualsZero(m_Measure.Value[i]))
 				continue;
-			Driver.DrawCircle(mx[i + 1], my[i + 1], 0.1, 128, 128, 128, 255);
+			Driver.DrawCircle(mx[i + 1], my[i + 1], 0.1 * IndicatorZoom, 128,
+					128, 128, 255);
 		}
-		Driver.DrawLine(0, 0, 0, 0.5, 0, 0, 255, 255);
-		Driver.DrawCircle(0, 0, 0.3, 255, 0, 0, 255);
+		Driver.DrawLine(0, 0, 0, 0.5 * IndicatorZoom, 0, 0, 255, 255);
+		Driver.DrawCircle(0, 0, 0.3 * IndicatorZoom, 255, 0, 0, 255);
 		delete[] mx;
 		delete[] my;
 	}
-	CRobot::DrawPresentation(Params, Driver);
+	CRobot::DrawPresentation(Params, IndicatorZoom, Driver);
 }
 
 /* Произвести измерения */

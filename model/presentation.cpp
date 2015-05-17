@@ -63,7 +63,8 @@ void vprobot::presentation::CPresentationProvider::InitPresentations(
 	for (i = 0; i < PresentationObject.size(); i++) {
 		const Json::Value po = PresentationObject[i];
 
-		m_DataSet.emplace_back(ParsePresentation(po), po["name"].asString());
+		m_DataSet.emplace_back(ParsePresentation(po), po["name"].asString(),
+				po["indicator_zoom"].asDouble());
 	}
 }
 
@@ -72,7 +73,7 @@ void vprobot::presentation::CPresentationProvider::UpdatePresentation(
 		CPresentationDriver &Driver, const std::string &Name) {
 	for (auto d : m_DataSet) {
 		if (Name == d.Name) {
-			DrawPresentation(d.Parameters, Driver);
+			DrawPresentation(d.Parameters, d.IndicatorZoom, Driver);
 			break;
 		}
 	}

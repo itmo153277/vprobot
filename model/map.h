@@ -61,6 +61,7 @@ protected:
 	/* Отображаем данные */
 	void DrawPresentation(
 			const vprobot::presentation::SPresentationParameters *Params,
+			double IndicatorZoom,
 			vprobot::presentation::CPresentationDriver &Driver);
 public:
 	CPointMap(const Json::Value &MapObject);
@@ -85,6 +86,7 @@ protected:
 	/* Отображаем данные */
 	void DrawPresentation(
 			const vprobot::presentation::SPresentationParameters *Params,
+			double IndicatorZoom,
 			vprobot::presentation::CPresentationDriver &Driver);
 public:
 	CLineMap(const Json::Value &MapObject);

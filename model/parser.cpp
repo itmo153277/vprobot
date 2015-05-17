@@ -188,7 +188,8 @@ SPresentationParameters *vprobot::scene::CNormalScene::CInfo::ParsePresentation(
 
 /* Отображаем данные */
 void vprobot::scene::CNormalScene::CInfo::DrawPresentation(
-		const SPresentationParameters *Params, CPresentationDriver &Driver) {
+		const SPresentationParameters *Params, double IndicatorZoom,
+		CPresentationDriver &Driver) {
 	const SInfoPresentationPrameters *i_Params =
 			dynamic_cast<const SInfoPresentationPrameters *>(Params);
 

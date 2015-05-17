@@ -170,7 +170,8 @@ SPresentationParameters *vprobot::control::mapping::CGridMapper::ParsePresentati
 
 /* Отображаем данные */
 void vprobot::control::mapping::CGridMapper::DrawPresentation(
-		const SPresentationParameters *Params, CPresentationDriver &Driver) {
+		const SPresentationParameters *Params, double IndicatorZoom,
+		CPresentationDriver &Driver) {
 	const SGridPresentationPrameters *i_Params =
 			dynamic_cast<const SGridPresentationPrameters *>(Params);
 	if (i_Params != NULL) {

@@ -108,6 +108,7 @@ protected:
 	/* Отображаем данные */
 	void DrawPresentation(
 			const vprobot::presentation::SPresentationParameters *Params,
+			double IndicatorZoom,
 			vprobot::presentation::CPresentationDriver &Driver);
 public:
 	CRobot(const Json::Value &RobotObject);
@@ -192,6 +193,7 @@ protected:
 	/* Отображаем данные */
 	void DrawPresentation(
 			const vprobot::presentation::SPresentationParameters *Params,
+			double IndicatorZoom,
 			vprobot::presentation::CPresentationDriver &Driver);
 public:
 	CRobotWithScanner(const Json::Value &RobotObject,

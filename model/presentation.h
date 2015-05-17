@@ -59,8 +59,8 @@ public:
 	virtual void DrawLine(double x0, double y0, double xf, double yf, int R,
 			int G, int B, int A) = 0;
 	/* Нарисовать квадрат */
-	virtual void DrawRectangle(double x0, double y0, double xf, double yf, int R,
-			int G, int B, int A) = 0;
+	virtual void DrawRectangle(double x0, double y0, double xf, double yf,
+			int R, int G, int B, int A) = 0;
 	/* Написать текст */
 	virtual void PutText(double x, double y, const char *Text, int R, int G,
 			int B, int A) = 0;
@@ -79,10 +79,12 @@ private:
 	struct SPresentationData {
 		SPresentationParameters *Parameters;
 		std::string Name;
+		double IndicatorZoom;
 
 		SPresentationData(SPresentationParameters *i_Parameters,
-				const std::string &i_Name) :
-				Parameters(i_Parameters), Name(i_Name) {
+				const std::string &i_Name, double i_IndicatorZoom) :
+				Parameters(i_Parameters), Name(i_Name), IndicatorZoom(
+						i_IndicatorZoom) {
 		}
 	};
 	/* Набор параметров */
@@ -97,9 +99,8 @@ protected:
 			const Json::Value &PresentationObject) {
 		return NULL;
 	}
-	/* Отображаем данные */
 	virtual void DrawPresentation(const SPresentationParameters *Params,
-			CPresentationDriver &Driver) {
+			double IndicatorZoom, CPresentationDriver &Driver) {
 	}
 public:
 	CPresentationProvider();

@@ -71,7 +71,8 @@ vprobot::control::localization::CEKFLocalization::~CEKFLocalization() {
 
 /* Отображаем данные */
 void vprobot::control::localization::CEKFLocalization::DrawPresentation(
-		const SPresentationParameters *Params, CPresentationDriver &Driver) {
+		const SPresentationParameters *Params, double IndicatorZoom,
+		CPresentationDriver &Driver) {
 	for (auto s : m_States) {
 		Matrix2d cov = s.s_CovState.block<2, 2>(0, 0);
 		Vector2d x = s.s_MeanState.block<2, 1>(0, 0);
@@ -80,16 +81,19 @@ void vprobot::control::localization::CEKFLocalization::DrawPresentation(
 		Driver.DrawEllipse(x, cov, 255, 0, 0, 64);
 		if (LessThan(da, 0.1)) {
 			Driver.DrawLine(s.s_MeanState[0], s.s_MeanState[1],
-					s.s_MeanState[0] + cos(s.s_MeanState[2]) * 0.8,
-					s.s_MeanState[1] + sin(s.s_MeanState[2]) * 0.8, 0, 0, 255,
-					255);
+					s.s_MeanState[0]
+							+ cos(s.s_MeanState[2]) * 0.8 * IndicatorZoom,
+					s.s_MeanState[1]
+							+ sin(s.s_MeanState[2]) * 0.8 * IndicatorZoom, 0, 0,
+					255, 255);
 		} else if (GreaterThan(da, PI)) {
-			Driver.DrawCircle(x[0], x[1], 0.8, 0, 0, 255, 92);
+			Driver.DrawCircle(x[0], x[1], 0.8 * IndicatorZoom, 0, 0, 255, 92);
 		} else {
-			Driver.DrawPie(x[0], x[1], 0.8, s.s_MeanState[2] - da,
-					s.s_MeanState[2] + da, 0, 0, 255, 92);
+			Driver.DrawPie(x[0], x[1], 0.8 * IndicatorZoom,
+					s.s_MeanState[2] - da, s.s_MeanState[2] + da, 0, 0, 255,
+					92);
 		}
-		Driver.DrawCircle(x[0], x[1], 0.3, 255, 0, 0, 255);
+		Driver.DrawCircle(x[0], x[1], 0.3 * IndicatorZoom, 255, 0, 0, 255);
 	}
 }
 
