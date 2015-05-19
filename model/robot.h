@@ -67,7 +67,8 @@ enum ControlCommand {
 	ForwardLeft,
 	Backward,
 	BackwardRight,
-	BackwardLeft
+	BackwardLeft,
+	MaxCommand
 };
 
 /* Базовый класс робота */

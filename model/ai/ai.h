@@ -59,6 +59,9 @@ private:
 	/* Значения для обновления карты */
 	double m_Occ;
 	double m_Free;
+	/* Габариты робота */
+	double m_RobotWidth;
+	double m_RobotHeight;
 	/* Размеры карты */
 	double m_MapWidth;
 	double m_MapHeight;
@@ -88,6 +91,9 @@ private:
 	double m_Cp;
 	/* Команды */
 	vprobot::robot::ControlCommand *m_Command;
+	/* Библиотека команд */
+	std::size_t m_NumCommands;
+	vprobot::robot::ControlCommand **m_CommandLibrary;
 
 	/* Состояния роботов */
 	struct SState {
@@ -106,6 +112,33 @@ private:
 				m_Num(Num) {
 		}
 	};
+
+	/* Ветви дерева */
+	struct STreeNode {
+		/* Родитель */
+		STreeNode *Parent;
+		/* Дети */
+		STreeNode **Childs;
+		/* Текущий вес */
+		double Weight;
+		/* Сумма весов детей */
+		double WightSum;
+		/* Лучшее значение функционала */
+		double BestY;
+		/* Текущее значение функционала */
+		double SelfY;
+		/* Прибыль */
+		double Q;
+		/* Количество нодов */
+		int n_vis;
+		/* Карта */
+		GridMap Map;
+
+		/* Инициализация ветви */
+		void Initialize(const STreeNode &Parent, const GridMap &Map);
+	};
+	/* Дерево */
+	STreeNode *m_Tree;
 
 	/* Генерировать команды */
 	bool GenerateCommands();

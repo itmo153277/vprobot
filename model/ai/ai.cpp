@@ -18,6 +18,9 @@
 
 #include "ai.h"
 
+#include <cmath>
+#include <cstring>
+
 #include "../../types.h"
 
 using namespace ::std;
@@ -43,6 +46,8 @@ vprobot::control::ai::CAIControlSystem::CAIControlSystem(
 	m_DAngle = ControlSystemObject["dangle"].asDouble();
 	m_MaxLength = ControlSystemObject["max_length"].asDouble();
 	m_DDist = ControlSystemObject["ddist"].asDouble();
+	m_RobotWidth = ControlSystemObject["robot_width"].asDouble();
+	m_RobotHeight = ControlSystemObject["robot_height"].asDouble();
 	i_Occ = ControlSystemObject["prob_occ"].asDouble();
 	i_Free = ControlSystemObject["prob_free"].asDouble();
 	m_Occ = log(i_Occ / (1 - i_Occ));
@@ -57,12 +62,14 @@ vprobot::control::ai::CAIControlSystem::CAIControlSystem(
 	size_t i;
 	const Json::Value Params = ControlSystemObject["robot_params"];
 
+	m_NumCommands = 1;
 	for (i = 0; i < m_Count; i++) {
 		const Json::Value RobotParams = Params[static_cast<Json::ArrayIndex>(i)];
 
 		m_MapSet.push_back(GridMap::Zero(m_NumWidth, m_NumHeight));
 		m_States.emplace_back();
 		m_States[i].s_MeanState << RobotParams["x"].asDouble(), RobotParams["y"].asDouble(), RobotParams["angle"].asDouble();
+		m_NumCommands *= MaxCommand;
 	}
 
 	double i_Exists, i_NExists;
@@ -81,9 +88,41 @@ vprobot::control::ai::CAIControlSystem::CAIControlSystem(
 	m_Tmin = ControlSystemObject["t_min"].asDouble();
 	m_Cp = ControlSystemObject["c_p"].asDouble();
 	m_Command = new ControlCommand[m_Count];
+	m_Tree = new STreeNode[m_NumSimulations];
+	for (i = 0; i < m_NumSimulations; i++) {
+		m_Tree[i].Childs = new STreeNode *[m_NumCommands];
+	}
+
+	size_t j;
+
+	m_CommandLibrary = new ControlCommand *[m_NumCommands];
+	m_CommandLibrary[0] = new ControlCommand[m_Count];
+	memset(m_CommandLibrary[0], 0, sizeof(ControlCommand) * m_Count);
+	for (i = 1; i < m_NumCommands; i++) {
+		m_CommandLibrary[i] = new ControlCommand[m_Count];
+		memcpy(m_CommandLibrary[i], m_CommandLibrary[i - 1],
+				sizeof(ControlCommand) * m_Count);
+		for (j = 0; j < m_Count; j++) {
+			m_CommandLibrary[i][j] = static_cast<ControlCommand>(m_CommandLibrary[i][j] + 1);
+			if (m_CommandLibrary[i][j] == MaxCommand) {
+				m_CommandLibrary[i][j] = Nothing;
+			} else
+				break;
+		}
+	}
 }
 
 vprobot::control::ai::CAIControlSystem::~CAIControlSystem() {
+	size_t i;
+
+	for (i = 0; i < m_NumCommands; i++) {
+		delete[] m_CommandLibrary[i];
+	}
+	delete[] m_CommandLibrary;
+	for (i = 0; i < m_NumSimulations; i++) {
+		delete[] m_Tree[i].Childs;
+	}
+	delete[] m_Tree;
 	delete[] m_Command;
 }
 

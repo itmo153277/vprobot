@@ -95,6 +95,8 @@ void vprobot::robot::CRobot::ExecuteCommand(const ControlCommand &Command) {
 		case BackwardRight:
 			Cmd << -gen_len(), -m_Radius + gen_rad();
 			break;
+		default:
+			break;
 	}
 	ExecuteCommand(Cmd);
 }
