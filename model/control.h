@@ -37,9 +37,14 @@ namespace control {
 class CControlSystem: public vprobot::presentation::CPresentationProvider {
 private:
 	CControlSystem(const CControlSystem &ControlSystem) = default;
+protected:
+	/* Количество роботов */
+	std::size_t m_Count;
+	/* Последняя команда */
+	const vprobot::robot::ControlCommand *m_LastCommand;
 public:
-	CControlSystem() = default;
-	virtual ~CControlSystem() = default;
+	CControlSystem(const Json::Value &ControlSystemObject);
+	virtual ~CControlSystem();
 
 	/* Получить команду */
 	virtual const vprobot::robot::ControlCommand * const GetCommands(
@@ -56,11 +61,6 @@ private:
 	/* Текущая позиция в наборе */
 	CommandSet::iterator m_Pos;
 	CSequentialControlSystem(const CSequentialControlSystem &ControlSystem) = default;
-protected:
-	/* Количество роботов */
-	std::size_t m_Count;
-	/* Последняя команда */
-	const vprobot::robot::ControlCommand *m_LastCommand;
 public:
 	CSequentialControlSystem(const Json::Value &ControlSystemObject);
 	~CSequentialControlSystem();

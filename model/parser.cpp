@@ -25,6 +25,7 @@
 
 #include "localization/ekf.h"
 #include "mapping/grid.h"
+#include "ai/ai.h"
 
 using namespace ::std;
 using namespace ::vprobot;
@@ -34,6 +35,7 @@ using namespace ::vprobot::robot;
 using namespace ::vprobot::control;
 using namespace ::vprobot::control::localization;
 using namespace ::vprobot::control::mapping;
+using namespace ::vprobot::control::ai;
 using namespace ::vprobot::scene;
 
 CScene *vprobot::Scene(const Json::Value &SceneObject) {
@@ -52,24 +54,30 @@ CScene *vprobot::Scene(const Json::Value &SceneObject) {
 	function<CMap *()> MapConstructers[cMapTypes] = {
 			[&]() {return new CPointMap(SceneObject["map"]);},
 			[&]() {return new CLineMap(SceneObject["map"]);}};
+
 	const int cRobotTypes = 3;
 	static const char *RobotAliases[cRobotTypes] = {"WithExactPosition",
 			"WithPointsPosition", "WithScanner"};
+
 	function<CRobot *()> RobotConstructors[cRobotTypes] =
 			{
 					[&]() {return new CRobotWithExactPosition(SceneObject["robot"]);},
 					[&]() {return new CRobotWithPointsPosition(SceneObject["robot"], *Map);},
 					[&]() {return new CRobotWithScanner(SceneObject["robot"], *Map);}};
-	const int cControlSystemsTypes = 3;
+
+	const int cControlSystemsTypes = 4;
 	static const char *ControlSystemAliases[cControlSystemsTypes] = {
-			"Sequential", "EKF Localization", "Grid Mapper"};
+			"Sequential", "EKF Localization", "Grid Mapper", "AI"};
+
 	function<CControlSystem *()> ControlSystemConstructors[cControlSystemsTypes] =
 			{
 					[&]() {return new CSequentialControlSystem(SceneObject["control_system"]);},
 					[&]() {return new CEKFLocalization(SceneObject["control_system"]);},
-					[&]() {return new CGridMapper(SceneObject["control_system"]);}};
+					[&]() {return new CGridMapper(SceneObject["control_system"]);},
+					[&]() {return new CAIControlSystem(SceneObject["control_system"]);}};
 
 	size_t i;
+
 	for (i = 0; i < cMapTypes; i++) {
 		if (MapType == MapAliases[i]) {
 			Map = MapConstructers[i]();

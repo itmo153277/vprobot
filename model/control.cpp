@@ -24,15 +24,25 @@ using namespace ::std;
 using namespace ::vprobot::robot;
 using namespace ::vprobot::control;
 
+/* CControlSystem */
+
+vprobot::control::CControlSystem::CControlSystem(
+		const Json::Value &ControlSystemObject) :
+		m_LastCommand(NULL) {
+	m_Count = ControlSystemObject["count"].asInt();
+}
+
+vprobot::control::CControlSystem::~CControlSystem() {
+}
+
 /* CSequentialControlSystem */
 
 vprobot::control::CSequentialControlSystem::CSequentialControlSystem(
 		const Json::Value &ControlSystemObject) :
-		CControlSystem(), m_Set(), m_LastCommand(NULL) {
+		CControlSystem(ControlSystemObject), m_Set() {
 	Json::ArrayIndex i;
 	const Json::Value Commands = ControlSystemObject["commands"];
 
-	m_Count = ControlSystemObject["count"].asInt();
 	for (i = 0; i < Commands.size(); i++) {
 		ControlCommand *cmd = new ControlCommand[m_Count];
 		Json::ArrayIndex j;
