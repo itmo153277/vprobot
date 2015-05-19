@@ -16,11 +16,9 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "grid.h"
+#include "ai.h"
 
-#include <cmath>
-
-#include "../types.h"
+#include "../../types.h"
 
 using namespace ::std;
 using namespace ::Eigen;
@@ -28,13 +26,13 @@ using namespace ::vprobot;
 using namespace ::vprobot::presentation;
 using namespace ::vprobot::robot;
 using namespace ::vprobot::control;
-using namespace ::vprobot::control::mapping;
+using namespace ::vprobot::control::ai;
 
-/* CGridMapper */
+/* CAIControlSystem */
 
-vprobot::control::mapping::CGridMapper::CGridMapper(
+vprobot::control::ai::CAIControlSystem::CAIControlSystem(
 		const Json::Value &ControlSystemObject) :
-		CSequentialControlSystem(ControlSystemObject), m_MapSet(), m_States() {
+		CControlSystem(ControlSystemObject) {
 	double i_Occ, i_Free;
 
 	m_Radius = 1 / ControlSystemObject["radius"].asDouble();
@@ -62,17 +60,25 @@ vprobot::control::mapping::CGridMapper::CGridMapper(
 		m_States.emplace_back();
 		m_States[i].s_MeanState << RobotParams["x"].asDouble(), RobotParams["y"].asDouble(), RobotParams["angle"].asDouble();
 	}
+	m_DetectionThreshold = ControlSystemObject["beacons_threshold"].asDouble();
+	m_NumParticles = ControlSystemObject["robot_particles"].asInt();
+	m_NumSimulations = ControlSystemObject["num_simulations"].asInt();
+	m_CT = ControlSystemObject["c_t"].asDouble();
+	m_Tmin = ControlSystemObject["t_min"].asDouble();
+	m_Cp = ControlSystemObject["c_p"].asDouble();
+	m_Command = new ControlCommand[m_Count];
 }
 
-vprobot::control::mapping::CGridMapper::~CGridMapper() {
+vprobot::control::ai::CAIControlSystem::~CAIControlSystem() {
+	delete[] m_Command;
 }
 
 /* Получить команду */
-const ControlCommand * const vprobot::control::mapping::CGridMapper::GetCommands(
+const ControlCommand * const vprobot::control::ai::CAIControlSystem::GetCommands(
 		const SMeasures * const *Measurements) {
 	size_t i;
 
-	if (m_LastCommand != NULL) {
+	if (m_LastCommand != NULL) { /* TODO FastSLAM для локализации */
 		for (i = 0; i < m_Count; i++) {
 			if (m_LastCommand[i] == Nothing)
 				continue;
@@ -116,7 +122,7 @@ const ControlCommand * const vprobot::control::mapping::CGridMapper::GetCommands
 			m_States[i].s_MeanState << OldMean[0] + dx, OldMean[1] + dy, nangle;
 		}
 	}
-	if (Measurements != NULL) {
+	if (Measurements != NULL) { /* TODO FastSLAM для локализации */
 		for (i = 0; i < m_Count; i++) {
 			const SMeasuresDistances *i_Measurement =
 					dynamic_cast<const SMeasuresDistances *>(Measurements[i]);
@@ -159,16 +165,20 @@ const ControlCommand * const vprobot::control::mapping::CGridMapper::GetCommands
 				}
 		}
 	}
-	return CSequentialControlSystem::GetCommands(Measurements);
+	if (GenerateCommands()) {
+		m_LastCommand = NULL;
+	} else
+		m_LastCommand = m_Command;
+	return m_LastCommand;
 }
 
-SPresentationParameters *vprobot::control::mapping::CGridMapper::ParsePresentation(
+SPresentationParameters *vprobot::control::ai::CAIControlSystem::ParsePresentation(
 		const Json::Value &PresentationObject) {
 	return new SGridPresentationPrameters(PresentationObject["robot"].asInt());
 }
 
 /* Отображаем данные */
-void vprobot::control::mapping::CGridMapper::DrawPresentation(
+void vprobot::control::ai::CAIControlSystem::DrawPresentation(
 		const SPresentationParameters *Params, double IndicatorZoom,
 		CPresentationDriver &Driver) {
 	const SGridPresentationPrameters *i_Params =
@@ -197,4 +207,9 @@ void vprobot::control::mapping::CGridMapper::DrawPresentation(
 						255);
 			}
 	}
+}
+
+/* Генерировать команды */
+bool vprobot::control::ai::CAIControlSystem::GenerateCommands() {
+	return false;
 }
