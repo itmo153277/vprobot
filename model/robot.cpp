@@ -222,11 +222,11 @@ void vprobot::robot::CRobotWithScanner::DrawPresentation(
 		for (i = 0; i < m_Count; i++) {
 			if (EqualsZero(m_Measure.Value[i]))
 				continue;
-			Driver.DrawCircle(mx[i + 1], my[i + 1], 0.1 * IndicatorZoom, 128,
+			Driver.DrawCircle(mx[i + 1], my[i + 1], 0.2 * IndicatorZoom, 128,
 					128, 128, 255);
 		}
-		Driver.DrawLine(0, 0, 0, 0.5 * IndicatorZoom, 0, 0, 255, 255);
-		Driver.DrawCircle(0, 0, 0.3 * IndicatorZoom, 255, 0, 0, 255);
+		Driver.DrawLine(0, 0, 0, 0.8 * IndicatorZoom, 0, 0, 255, 255);
+		Driver.DrawCircle(0, 0, 0.6 * IndicatorZoom, 255, 0, 0, 255);
 		delete[] mx;
 		delete[] my;
 	}

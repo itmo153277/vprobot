@@ -46,12 +46,16 @@ public:
 private:
 	/* Обратный радус поворота */
 	double m_Radius;
+	double m_DRadius;
 	/* Длина перемещения */
 	double m_Len;
+	double m_DLen;
 	/* Угол отклонения */
 	double m_MaxAngle;
+	double m_DAngle;
 	/* Дальность */
 	double m_MaxLength;
+	double m_DDist;
 	/* Значения для обновления карты */
 	double m_Occ;
 	double m_Free;
@@ -67,8 +71,15 @@ private:
 	MapSet m_MapSet;
 	/* Граница для поиска маяков */
 	double m_DetectionThreshold;
+	/* Границы учета маяков */
+	double m_DeleteBeacon;
+	double m_AddBeacon;
+	/* Значения для обновления данных о маяках */
+	double m_BeaconExists;
+	double m_BeaconNotExists;
 	/* Количество частиц на робота */
 	std::size_t m_NumParticles;
+	std::size_t m_NumAddParticles;
 	/* Количество симуляций MCTS */
 	std::size_t m_NumSimulations;
 	/* Параметры функции оценки */

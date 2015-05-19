@@ -172,11 +172,11 @@ void vprobot::scene::CNormalScene::DrawPresentation(
 		vprobot::presentation::CPresentationDriver &Driver,
 		const std::string &Name) {
 	m_Map->UpdatePresentation(Driver, Name);
+	m_Info.UpdatePresentation(Driver, Name);
+	m_ControlSystem->UpdatePresentation(Driver, Name);
 	for (auto r : m_Robots) {
 		r->UpdatePresentation(Driver, Name);
 	}
-	m_ControlSystem->UpdatePresentation(Driver, Name);
-	m_Info.UpdatePresentation(Driver, Name);
 }
 
 /* CNormalScene::CInfo */

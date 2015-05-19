@@ -36,9 +36,13 @@ vprobot::control::ai::CAIControlSystem::CAIControlSystem(
 	double i_Occ, i_Free;
 
 	m_Radius = 1 / ControlSystemObject["radius"].asDouble();
+	m_DRadius = ControlSystemObject["dradius"].asDouble();
 	m_Len = ControlSystemObject["len"].asDouble();
+	m_DLen = ControlSystemObject["dlen"].asDouble();
 	m_MaxAngle = ControlSystemObject["max_angle"].asDouble();
+	m_DAngle = ControlSystemObject["dangle"].asDouble();
 	m_MaxLength = ControlSystemObject["max_length"].asDouble();
+	m_DDist = ControlSystemObject["ddist"].asDouble();
 	i_Occ = ControlSystemObject["prob_occ"].asDouble();
 	i_Free = ControlSystemObject["prob_free"].asDouble();
 	m_Occ = log(i_Occ / (1 - i_Occ));
@@ -60,8 +64,18 @@ vprobot::control::ai::CAIControlSystem::CAIControlSystem(
 		m_States.emplace_back();
 		m_States[i].s_MeanState << RobotParams["x"].asDouble(), RobotParams["y"].asDouble(), RobotParams["angle"].asDouble();
 	}
+
+	double i_Exists, i_NExists;
+
 	m_DetectionThreshold = ControlSystemObject["beacons_threshold"].asDouble();
+	m_DeleteBeacon = ControlSystemObject["beacons_delete"].asDouble();
+	m_AddBeacon = ControlSystemObject["beacons_add"].asDouble();
+	i_Exists = ControlSystemObject["beacons_exists"].asDouble();
+	i_NExists = ControlSystemObject["beacons_not_exists"].asDouble();
+	m_BeaconExists = log(i_Exists / (1 - i_Exists));
+	m_BeaconNotExists = log(i_NExists / (1 - i_NExists));
 	m_NumParticles = ControlSystemObject["robot_particles"].asInt();
+	m_NumAddParticles = ControlSystemObject["robot_move_particles"].asInt();
 	m_NumSimulations = ControlSystemObject["num_simulations"].asInt();
 	m_CT = ControlSystemObject["c_t"].asDouble();
 	m_Tmin = ControlSystemObject["t_min"].asDouble();
@@ -211,5 +225,5 @@ void vprobot::control::ai::CAIControlSystem::DrawPresentation(
 
 /* Генерировать команды */
 bool vprobot::control::ai::CAIControlSystem::GenerateCommands() {
-	return false;
+	return true;
 }
