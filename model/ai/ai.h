@@ -25,6 +25,8 @@
 
 #include <cstddef>
 #include <vector>
+#include <functional>
+#include <random>
 #include <Eigen/Dense>
 #include <json/json.h>
 #include "../presentation.h"
@@ -89,11 +91,15 @@ private:
 	double m_CT;
 	double m_Tmin;
 	double m_Cp;
-	/* Команды */
-	vprobot::robot::ControlCommand *m_Command;
+	/* Критерий окончания */
+	double m_EndC;
 	/* Библиотека команд */
 	std::size_t m_NumCommands;
 	vprobot::robot::ControlCommand **m_CommandLibrary;
+	/* Генератор случайных чисел */
+	std::default_random_engine m_Generator;
+	/* Функция генератора случайных чисел */
+	std::function<double()> RandomFunction;
 
 	/* Состояния роботов */
 	struct SState {
@@ -122,23 +128,35 @@ private:
 		/* Текущий вес */
 		double Weight;
 		/* Сумма весов детей */
-		double WightSum;
+		double WeightSum;
 		/* Лучшее значение функционала */
 		double BestY;
 		/* Текущее значение функционала */
 		double SelfY;
 		/* Прибыль */
 		double Q;
-		/* Количество нодов */
-		int n_vis;
+		/* Количество посещений */
+		std::size_t n_vis;
 		/* Карта */
 		GridMap Map;
-
-		/* Инициализация ветви */
-		void Initialize(const STreeNode &Parent, const GridMap &Map);
+		/* Состояния роботов */
+		StateSet States;
 	};
 	/* Дерево */
 	STreeNode *m_Tree;
+
+	/* Инициализация ветви */
+	void InitializeNode(STreeNode *Node, STreeNode *Parent, const GridMap &Map,
+			const StateSet &States);
+	/* Посчитать значение функционала */
+	void UpdateY(STreeNode *Node, int Level);
+	/* Добавить ветвь */
+	void AddChild(STreeNode *Node, STreeNode *FreeNode, int Level);
+	/* Обновить состояния */
+	void UpdateStates(const vprobot::robot::ControlCommand *Commands,
+			StateSet &States);
+	/* Обновить карту */
+	void UpdateMap(STreeNode *Node, const GridMap &ParentMap);
 
 	/* Генерировать команды */
 	bool GenerateCommands();

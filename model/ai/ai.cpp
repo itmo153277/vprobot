@@ -35,7 +35,12 @@ using namespace ::vprobot::control::ai;
 
 vprobot::control::ai::CAIControlSystem::CAIControlSystem(
 		const Json::Value &ControlSystemObject) :
-		CControlSystem(ControlSystemObject) {
+		CControlSystem(ControlSystemObject), m_Generator(), m_States() {
+	random_device rd;
+
+	m_Generator.seed(rd());
+	RandomFunction = [&] {return generate_canonical<double, 10>(m_Generator);};
+
 	double i_Occ, i_Free;
 
 	m_Radius = 1 / ControlSystemObject["radius"].asDouble();
@@ -87,10 +92,11 @@ vprobot::control::ai::CAIControlSystem::CAIControlSystem(
 	m_CT = ControlSystemObject["c_t"].asDouble();
 	m_Tmin = ControlSystemObject["t_min"].asDouble();
 	m_Cp = ControlSystemObject["c_p"].asDouble();
-	m_Command = new ControlCommand[m_Count];
+	m_EndC = ControlSystemObject["end_c"].asDouble();
 	m_Tree = new STreeNode[m_NumSimulations];
 	for (i = 0; i < m_NumSimulations; i++) {
 		m_Tree[i].Childs = new STreeNode *[m_NumCommands];
+		m_Tree[i].Map = GridMap::Zero(m_NumWidth, m_NumHeight);
 	}
 
 	size_t j;
@@ -103,7 +109,8 @@ vprobot::control::ai::CAIControlSystem::CAIControlSystem(
 		memcpy(m_CommandLibrary[i], m_CommandLibrary[i - 1],
 				sizeof(ControlCommand) * m_Count);
 		for (j = 0; j < m_Count; j++) {
-			m_CommandLibrary[i][j] = static_cast<ControlCommand>(m_CommandLibrary[i][j] + 1);
+			m_CommandLibrary[i][j] =
+					static_cast<ControlCommand>(m_CommandLibrary[i][j] + 1);
 			if (m_CommandLibrary[i][j] == MaxCommand) {
 				m_CommandLibrary[i][j] = Nothing;
 			} else
@@ -122,8 +129,6 @@ vprobot::control::ai::CAIControlSystem::~CAIControlSystem() {
 	for (i = 0; i < m_NumSimulations; i++) {
 		delete[] m_Tree[i].Childs;
 	}
-	delete[] m_Tree;
-	delete[] m_Command;
 }
 
 /* Получить команду */
@@ -132,48 +137,7 @@ const ControlCommand * const vprobot::control::ai::CAIControlSystem::GetCommands
 	size_t i;
 
 	if (m_LastCommand != NULL) { /* TODO FastSLAM для локализации */
-		for (i = 0; i < m_Count; i++) {
-			if (m_LastCommand[i] == Nothing)
-				continue;
-
-			Vector2d u;
-
-			switch (m_LastCommand[i]) {
-				case Forward:
-					u << m_Len, 0;
-					break;
-				case ForwardLeft:
-					u << m_Len, m_Radius;
-					break;
-				case ForwardRight:
-					u << m_Len, -m_Radius;
-					break;
-				case Backward:
-					u << -m_Len, 0;
-					break;
-				case BackwardLeft:
-					u << -m_Len, m_Radius;
-					break;
-				case BackwardRight:
-					u << -m_Len, -m_Radius;
-					break;
-				default:
-					break;
-			}
-			double nangle = m_States[i].s_MeanState[2];
-			double dx, dy;
-
-			if (EqualsZero(u[1])) {
-				dx = u[0] * cos(nangle);
-				dy = u[0] * sin(nangle);
-			} else {
-				nangle = CorrectAngle(nangle + u[0] * u[1]);
-				dx = (sin(nangle) - sin(m_States[i].s_MeanState[2])) / u[1];
-				dy = (cos(m_States[i].s_MeanState[2]) - cos(nangle)) / u[1];
-			}
-			Vector3d OldMean = m_States[i].s_MeanState;
-			m_States[i].s_MeanState << OldMean[0] + dx, OldMean[1] + dy, nangle;
-		}
+		UpdateStates(m_LastCommand, m_States);
 	}
 	if (Measurements != NULL) { /* TODO FastSLAM для локализации */
 		for (i = 0; i < m_Count; i++) {
@@ -195,6 +159,9 @@ const ControlCommand * const vprobot::control::ai::CAIControlSystem::GetCommands
 							+ m_StartY - m_States[i].s_MeanState[1], nangle;
 					int nx;
 
+					if (GreaterThan(abs(cx), m_MaxLength)
+							|| GreaterThan(abs(cy), m_MaxLength))
+						continue;
 					nangle = atan2(cy, cx);
 					nx = static_cast<int>((CorrectAngle(
 							nangle - m_States[i].s_MeanState[2]) + m_MaxAngle)
@@ -218,10 +185,8 @@ const ControlCommand * const vprobot::control::ai::CAIControlSystem::GetCommands
 				}
 		}
 	}
-	if (GenerateCommands()) {
+	if (GenerateCommands())
 		m_LastCommand = NULL;
-	} else
-		m_LastCommand = m_Command;
 	return m_LastCommand;
 }
 
@@ -264,5 +229,175 @@ void vprobot::control::ai::CAIControlSystem::DrawPresentation(
 
 /* Генерировать команды */
 bool vprobot::control::ai::CAIControlSystem::GenerateCommands() {
-	return true;
+	size_t n = 1;
+	GridMap OutMap = GridMap::Zero(m_NumWidth, m_NumHeight);
+
+	for (auto m : m_MapSet)
+		OutMap += m;
+	InitializeNode(m_Tree, NULL, OutMap, m_States);
+	while (n < m_NumSimulations) {
+		AddChild(m_Tree, m_Tree + n, 1);
+		n++;
+	}
+
+	double diff = abs(m_Tree[0].SelfY - m_Tree[0].BestY);
+
+	if (GreaterThan(m_EndC, diff))
+		return true;
+	for (n = 0; n < m_NumCommands; n++) {
+		if (Equals(m_Tree[0].BestY, m_Tree[0].Childs[n]->BestY)) {
+			m_LastCommand = m_CommandLibrary[n];
+			return false;
+		}
+	}
+	m_LastCommand = m_CommandLibrary[0];
+	return false;
+}
+
+/* Инициализация ветви */
+void vprobot::control::ai::CAIControlSystem::InitializeNode(STreeNode *Node,
+		STreeNode *Parent, const GridMap &Map, const StateSet &States) {
+	size_t i;
+
+	Node->Map = Map;
+	Node->States = States;
+	Node->Parent = Parent;
+	Node->n_vis = 0;
+	for (i = 0; i < m_NumCommands; i++) {
+		Node->Childs[i] = NULL;
+	}
+}
+
+/* Посчитать значение функционала */
+void vprobot::control::ai::CAIControlSystem::UpdateY(STreeNode *Node,
+		int Level) {
+	double Y = 0;
+	size_t i, j;
+
+	for (i = 0; i < m_NumWidth; i++)
+		for (j = 0; j < m_NumHeight; j++) {
+			Y += 1 / cosh(Node->Map.row(i)[j] * 0.64);
+		}
+	Node->SelfY = Y;
+	Node->BestY = Node->SelfY;
+	Node->Q = 1 - m_CT * (Level / m_Tmin + Y / m_NumWidth / m_NumHeight);
+
+	STreeNode *Parent = Node->Parent, *Child = Node;
+
+	while (Parent != NULL) {
+		if (Parent->BestY > Child->SelfY)
+			Parent->BestY = Child->SelfY;
+		if (Parent->Q < Child->Q)
+			Parent->Q = Child->Q;
+		Parent->n_vis++;
+		if (Parent->n_vis >= m_NumCommands) {
+			Parent->WeightSum = 0;
+			for (i = 0; i < m_NumCommands; i++) {
+				Parent->Childs[i]->Weight =
+						Parent->Childs[i]->Q
+								+ 2 * m_Cp
+										* sqrt(
+												2 * log(Parent->n_vis + 1)
+														/ (Parent->Childs[i]->n_vis
+																+ 1));
+				Parent->WeightSum += Parent->Childs[i]->Weight;
+			}
+		}
+		Child = Child->Parent;
+		Parent = Parent->Parent;
+	}
+}
+
+/* Добавить ветвь */
+void vprobot::control::ai::CAIControlSystem::AddChild(STreeNode *Node,
+		STreeNode *FreeNode, int Level) {
+	if (Node->n_vis < m_NumCommands) {
+		size_t r, i = 0;
+
+		if (Node->n_vis == (m_NumCommands - 1)) {
+			r = 1;
+		} else
+			r = static_cast<size_t>(RandomFunction()
+					* (m_NumCommands - Node->n_vis - 1)) + 1;
+		for (;;) {
+			if (Node->Childs[i] != NULL) {
+				i++;
+				continue;
+			}
+			r--;
+			if (r == 0)
+				break;
+			i++;
+		}
+		Node->Childs[i] = FreeNode;
+		InitializeNode(FreeNode, Node, Node->Map, Node->States);
+		UpdateStates(m_CommandLibrary[i], FreeNode->States);
+		UpdateMap(FreeNode, Node->Map);
+		UpdateY(FreeNode, Level);
+	} else {
+		double w = RandomFunction() * Node->WeightSum;
+		size_t i;
+
+		for (i = 0; i < m_NumCommands; i++) {
+			w -= Node->Childs[i]->Weight;
+			if (LessOrEqualsZero(w)) {
+				AddChild(Node->Childs[i], FreeNode, Level + 1);
+				break;
+			}
+		}
+	}
+}
+
+/* Обновить состояния */
+void vprobot::control::ai::CAIControlSystem::UpdateStates(
+		const ControlCommand *Commands, StateSet &States) {
+	size_t i;
+	for (i = 0; i < m_Count; i++) {
+		if (Commands[i] == Nothing)
+			continue;
+
+		Vector2d u;
+
+		switch (Commands[i]) {
+			case Forward:
+				u << m_Len, 0;
+				break;
+			case ForwardLeft:
+				u << m_Len, m_Radius;
+				break;
+			case ForwardRight:
+				u << m_Len, -m_Radius;
+				break;
+			case Backward:
+				u << -m_Len, 0;
+				break;
+			case BackwardLeft:
+				u << -m_Len, m_Radius;
+				break;
+			case BackwardRight:
+				u << -m_Len, -m_Radius;
+				break;
+			default:
+				break;
+		}
+		double nangle = States[i].s_MeanState[2];
+		double dx, dy;
+
+		if (EqualsZero(u[1])) {
+			dx = u[0] * cos(nangle);
+			dy = u[0] * sin(nangle);
+		} else {
+			nangle = CorrectAngle(nangle + u[0] * u[1]);
+			dx = (sin(nangle) - sin(States[i].s_MeanState[2])) / u[1];
+			dy = (cos(States[i].s_MeanState[2]) - cos(nangle)) / u[1];
+		}
+		Vector3d OldMean = States[i].s_MeanState;
+		States[i].s_MeanState << OldMean[0] + dx, OldMean[1] + dy, nangle;
+	}
+}
+
+/* Обновить карту */
+void vprobot::control::ai::CAIControlSystem::UpdateMap(STreeNode *Node,
+		const GridMap &ParentMap) {
+
 }
