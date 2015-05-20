@@ -34,7 +34,7 @@ using namespace ::vprobot::robot;
 
 vprobot::robot::CRobot::CRobot(const Json::Value &RobotObject) :
 		CPresentationProvider(), m_State(), m_Generator() {
-	std::random_device rd;
+	random_device rd;
 
 	m_Generator.seed(rd());
 	m_Radius = 1 / RobotObject["radius"].asDouble();

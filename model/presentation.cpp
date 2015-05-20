@@ -70,7 +70,7 @@ void vprobot::presentation::CPresentationProvider::InitPresentations(
 
 /* Нарисовать */
 void vprobot::presentation::CPresentationProvider::UpdatePresentation(
-		CPresentationDriver &Driver, const std::string &Name) {
+		CPresentationDriver &Driver, const string &Name) {
 	for (auto d : m_DataSet) {
 		if (Name == d.Name) {
 			DrawPresentation(d.Parameters, d.IndicatorZoom, Driver);

@@ -45,7 +45,7 @@ T &max(T &x, T &y) {
 
 /* Модуль */
 template<typename T>
-T abs(T &x) {
+T abs(T x) {
 	if (x < 0)
 		return -x;
 	return x;

@@ -29,7 +29,7 @@ using namespace ::vprobot::ui;
 
 /* CSDLPresentationDriver */
 
-::vprobot::ui::CSDLPresentationDriver::CSDLPresentationDriver(
+vprobot::ui::CSDLPresentationDriver::CSDLPresentationDriver(
 		const Json::Value &ScreenObject, SDL_Renderer *Renderer) :
 		m_Title(ScreenObject["title"].asString()), m_Renderer(Renderer), m_Rect() {
 	m_Rect.x = ScreenObject["x"].asInt();
@@ -43,26 +43,26 @@ using namespace ::vprobot::ui;
 			SDL_TEXTUREACCESS_TARGET, m_Rect.w, m_Rect.h);
 }
 
-::vprobot::ui::CSDLPresentationDriver::~CSDLPresentationDriver() {
+vprobot::ui::CSDLPresentationDriver::~CSDLPresentationDriver() {
 	SDL_DestroyTexture(m_Texture);
 }
 
 /* Функция для преобразования координат */
-void ::vprobot::ui::CSDLPresentationDriver::TranslateCoord(double x, double y,
+void vprobot::ui::CSDLPresentationDriver::TranslateCoord(double x, double y,
 		Sint16 &d_x, Sint16 &d_y) {
 	d_x = static_cast<Sint16>((x + m_ofsx) * m_zoom);
 	d_y = m_Rect.h - static_cast<Sint16>((y + m_ofsy) * m_zoom);
 }
 
 /* Обновить экран */
-void ::vprobot::ui::CSDLPresentationDriver::Update() {
+void vprobot::ui::CSDLPresentationDriver::Update() {
 	SDL_SetRenderTarget(m_Renderer, m_Texture);
 	SDL_SetRenderDrawColor(m_Renderer, 255, 255, 255, 255);
 	SDL_RenderFillRect(m_Renderer, NULL);
 }
 
 /* Нарисовать точку */
-void ::vprobot::ui::CSDLPresentationDriver::DrawCircle(double x, double y,
+void vprobot::ui::CSDLPresentationDriver::DrawCircle(double x, double y,
 		double r, int R, int G, int B, int A) {
 	Sint16 r_x, r_y, r_r = static_cast<Uint16>(m_zoom * r);
 
@@ -72,8 +72,8 @@ void ::vprobot::ui::CSDLPresentationDriver::DrawCircle(double x, double y,
 }
 
 /* Нарисовать угол */
-void ::vprobot::ui::CSDLPresentationDriver::DrawPie(double x, double y,
-		double r, double sa, double fa, int R, int G, int B, int A) {
+void vprobot::ui::CSDLPresentationDriver::DrawPie(double x, double y, double r,
+		double sa, double fa, int R, int G, int B, int A) {
 	Sint16 r_x, r_y, r_r = static_cast<Uint16>(m_zoom * r), r_sa =
 			static_cast<Uint16>(-fa / PI * 180), r_fa = static_cast<Uint16>(-sa
 			/ PI * 180);
@@ -86,7 +86,7 @@ void ::vprobot::ui::CSDLPresentationDriver::DrawPie(double x, double y,
 }
 
 /* Нарисовать элипс */
-void ::vprobot::ui::CSDLPresentationDriver::DrawEllipse(double x, double y,
+void vprobot::ui::CSDLPresentationDriver::DrawEllipse(double x, double y,
 		double a, double b, double angle, int R, int G, int B, int A) {
 	Sint16 r_x, r_y, r_a, r_b, r_w, r_h;
 	SDL_Texture *aux;
@@ -113,7 +113,7 @@ void ::vprobot::ui::CSDLPresentationDriver::DrawEllipse(double x, double y,
 }
 
 /* Нарисовать фигуру */
-void ::vprobot::ui::CSDLPresentationDriver::DrawShape(double *x, double *y,
+void vprobot::ui::CSDLPresentationDriver::DrawShape(double *x, double *y,
 		int count, int R, int G, int B, int A, int f_R, int f_G, int f_B,
 		int f_A) {
 	Sint16 *r_x, *r_y;
@@ -133,7 +133,7 @@ void ::vprobot::ui::CSDLPresentationDriver::DrawShape(double *x, double *y,
 }
 
 /* Нарисовать линию */
-void ::vprobot::ui::CSDLPresentationDriver::DrawLine(double x0, double y0,
+void vprobot::ui::CSDLPresentationDriver::DrawLine(double x0, double y0,
 		double xf, double yf, int R, int G, int B, int A) {
 	Sint16 r_x0, r_y0, r_xf, r_yf;
 
@@ -144,7 +144,7 @@ void ::vprobot::ui::CSDLPresentationDriver::DrawLine(double x0, double y0,
 }
 
 /* Нарисовать квадрат */
-void ::vprobot::ui::CSDLPresentationDriver::DrawRectangle(double x0, double y0,
+void vprobot::ui::CSDLPresentationDriver::DrawRectangle(double x0, double y0,
 		double xf, double yf, int R, int G, int B, int A) {
 	Sint16 r_x[4], r_y[4];
 
@@ -160,7 +160,7 @@ void ::vprobot::ui::CSDLPresentationDriver::DrawRectangle(double x0, double y0,
 }
 
 /* Написать текст */
-void ::vprobot::ui::CSDLPresentationDriver::PutText(double x, double y,
+void vprobot::ui::CSDLPresentationDriver::PutText(double x, double y,
 		const char *Text, int R, int G, int B, int A) {
 	Sint16 r_x, r_y;
 
@@ -170,7 +170,7 @@ void ::vprobot::ui::CSDLPresentationDriver::PutText(double x, double y,
 }
 
 /* Проецировать на экран */
-void ::vprobot::ui::CSDLPresentationDriver::ProjectToSurface() {
+void vprobot::ui::CSDLPresentationDriver::ProjectToSurface() {
 	SDL_SetTextureBlendMode(m_Texture, SDL_BLENDMODE_BLEND);
 	SDL_RenderCopy(m_Renderer, m_Texture, NULL, &m_Rect);
 	SDL_SetRenderDrawColor(m_Renderer, 0, 0, 0, 255);
@@ -181,7 +181,7 @@ void ::vprobot::ui::CSDLPresentationDriver::ProjectToSurface() {
 
 /* CUI */
 
-::vprobot::ui::CUI::CUI(CPresentationHandler &Handler,
+vprobot::ui::CUI::CUI(CPresentationHandler &Handler,
 		const Json::Value &PresentationObject) :
 		m_Handler(Handler), m_ScreensSet(), m_Quit(false), m_Redraw(false), m_Wait(
 				false), m_HandlerFunction(NULL) {
@@ -217,7 +217,7 @@ void ::vprobot::ui::CSDLPresentationDriver::ProjectToSurface() {
 	m_Cond = SDL_CreateCond();
 }
 
-::vprobot::ui::CUI::~CUI() {
+vprobot::ui::CUI::~CUI() {
 	SDL_DestroyCond(m_Cond);
 	SDL_DestroyMutex(m_MutexDraw);
 	for (auto s : m_ScreensSet) {
@@ -230,10 +230,10 @@ void ::vprobot::ui::CSDLPresentationDriver::ProjectToSurface() {
 }
 
 /* Функция для потока обработки сообщений */
-int ::vprobot::ui::CUI::ThreadFunction(void *data) {
+int vprobot::ui::CUI::ThreadFunction(void *data) {
 	return static_cast<CUI *>(data)->ThreadProcess();
 }
-int ::vprobot::ui::CUI::ThreadProcess() {
+int vprobot::ui::CUI::ThreadProcess() {
 	bool quit = false;
 	CPresentationHandler::SimulationState i_State =
 			CPresentationHandler::SimulationEnd;
@@ -266,7 +266,7 @@ int ::vprobot::ui::CUI::ThreadProcess() {
 }
 
 /* Обновление данных */
-void ::vprobot::ui::CUI::Process(const HandlerFunction &Function) {
+void vprobot::ui::CUI::Process(const HandlerFunction &Function) {
 	bool input = false, quit = false, wait = false;
 	SDL_Thread *i_Thread;
 	FPSmanager manager;

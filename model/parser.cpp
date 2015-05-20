@@ -170,7 +170,7 @@ void vprobot::scene::CNormalScene::Simulate() {
 /* Нарисовать презентацию */
 void vprobot::scene::CNormalScene::DrawPresentation(
 		vprobot::presentation::CPresentationDriver &Driver,
-		const std::string &Name) {
+		const string &Name) {
 	m_Map->UpdatePresentation(Driver, Name);
 	m_Info.UpdatePresentation(Driver, Name);
 	m_ControlSystem->UpdatePresentation(Driver, Name);
