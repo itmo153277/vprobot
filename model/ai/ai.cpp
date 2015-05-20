@@ -96,6 +96,7 @@ vprobot::control::ai::CAIControlSystem::CAIControlSystem(
 	m_Tree = new STreeNode[m_NumSimulations];
 	for (i = 0; i < m_NumSimulations; i++) {
 		m_Tree[i].Childs = new STreeNode *[m_NumCommands];
+		m_Tree[i].Fouls = new bool[m_NumCommands];
 		m_Tree[i].Map = GridMap::Zero(m_NumWidth, m_NumHeight);
 	}
 
@@ -128,7 +129,9 @@ vprobot::control::ai::CAIControlSystem::~CAIControlSystem() {
 	delete[] m_CommandLibrary;
 	for (i = 0; i < m_NumSimulations; i++) {
 		delete[] m_Tree[i].Childs;
+		delete[] m_Tree[i].Fouls;
 	}
+	delete[] m_Tree;
 }
 
 /* Получить команду */
@@ -149,7 +152,7 @@ const ControlCommand * const vprobot::control::ai::CAIControlSystem::GetCommands
 
 			double da = m_MaxAngle * 2 / i_Measurement->Value.rows(), dx =
 					m_MapWidth / m_NumWidth, dy = m_MapHeight / m_NumHeight,
-					dd = sqrt(dx * dx + dy * dy);
+					dd = sqrt(dx * dx + dy * dy) * 3;
 			size_t x, y;
 
 			for (x = 0; x < m_NumWidth; x++)
@@ -235,16 +238,21 @@ bool vprobot::control::ai::CAIControlSystem::GenerateCommands() {
 	for (auto m : m_MapSet)
 		OutMap += m;
 	InitializeNode(m_Tree, NULL, OutMap, m_States);
+	UpdateY(m_Tree, 0);
 	while (n < m_NumSimulations) {
 		AddChild(m_Tree, m_Tree + n, 1);
 		n++;
 	}
 
+	cout << m_Tree[0].SelfY << endl << m_Tree[0].BestY << endl << m_Tree[0].Q
+			<< endl << endl;
 	double diff = abs(m_Tree[0].SelfY - m_Tree[0].BestY);
 
 	if (GreaterThan(m_EndC, diff))
 		return true;
 	for (n = 0; n < m_NumCommands; n++) {
+		if (m_Tree[0].Fouls[n])
+			continue;
 		if (Equals(m_Tree[0].BestY, m_Tree[0].Childs[n]->BestY)) {
 			m_LastCommand = m_CommandLibrary[n];
 			return false;
@@ -263,8 +271,10 @@ void vprobot::control::ai::CAIControlSystem::InitializeNode(STreeNode *Node,
 	Node->States = States;
 	Node->Parent = Parent;
 	Node->n_vis = 0;
+	Node->n_foul = 0;
 	for (i = 0; i < m_NumCommands; i++) {
 		Node->Childs[i] = NULL;
+		Node->Fouls[i] = false;
 	}
 }
 
@@ -285,14 +295,16 @@ void vprobot::control::ai::CAIControlSystem::UpdateY(STreeNode *Node,
 	STreeNode *Parent = Node->Parent, *Child = Node;
 
 	while (Parent != NULL) {
-		if (Parent->BestY > Child->SelfY)
-			Parent->BestY = Child->SelfY;
+		if (Parent->BestY > Child->BestY)
+			Parent->BestY = Child->BestY;
 		if (Parent->Q < Child->Q)
 			Parent->Q = Child->Q;
 		Parent->n_vis++;
-		if (Parent->n_vis >= m_NumCommands) {
+		if ((Parent->n_vis + Parent->n_foul) >= m_NumCommands) {
 			Parent->WeightSum = 0;
 			for (i = 0; i < m_NumCommands; i++) {
+				if (Parent->Fouls[i])
+					continue;
 				Parent->Childs[i]->Weight =
 						Parent->Childs[i]->Q
 								+ 2 * m_Cp
@@ -311,16 +323,16 @@ void vprobot::control::ai::CAIControlSystem::UpdateY(STreeNode *Node,
 /* Добавить ветвь */
 void vprobot::control::ai::CAIControlSystem::AddChild(STreeNode *Node,
 		STreeNode *FreeNode, int Level) {
-	if (Node->n_vis < m_NumCommands) {
+	if ((Node->n_vis + Node->n_foul) < m_NumCommands) {
 		size_t r, i = 0;
 
-		if (Node->n_vis == (m_NumCommands - 1)) {
+		if ((Node->n_vis + Node->n_foul) == (m_NumCommands - 1)) {
 			r = 1;
 		} else
 			r = static_cast<size_t>(RandomFunction()
-					* (m_NumCommands - Node->n_vis - 1)) + 1;
+					* (m_NumCommands - Node->n_vis - Node->n_foul - 1)) + 1;
 		for (;;) {
-			if (Node->Childs[i] != NULL) {
+			if (Node->Childs[i] != NULL || Node->Fouls[i]) {
 				i++;
 				continue;
 			}
@@ -329,16 +341,26 @@ void vprobot::control::ai::CAIControlSystem::AddChild(STreeNode *Node,
 				break;
 			i++;
 		}
-		Node->Childs[i] = FreeNode;
-		InitializeNode(FreeNode, Node, Node->Map, Node->States);
-		UpdateStates(m_CommandLibrary[i], FreeNode->States);
-		UpdateMap(FreeNode, Node->Map);
-		UpdateY(FreeNode, Level);
+		StateSet i_States = Node->States;
+
+		UpdateStates(m_CommandLibrary[i], i_States);
+		if (i != 0 && CheckForFoul(Node, i_States)) {
+			Node->n_foul++;
+			Node->Fouls[i] = true;
+			AddChild(Node, FreeNode, Level);
+		} else {
+			Node->Childs[i] = FreeNode;
+			InitializeNode(FreeNode, Node, Node->Map, i_States);
+			UpdateMap(FreeNode);
+			UpdateY(FreeNode, Level);
+		}
 	} else {
 		double w = RandomFunction() * Node->WeightSum;
 		size_t i;
 
 		for (i = 0; i < m_NumCommands; i++) {
+			if (Node->Fouls[i])
+				continue;
 			w -= Node->Childs[i]->Weight;
 			if (LessOrEqualsZero(w)) {
 				AddChild(Node->Childs[i], FreeNode, Level + 1);
@@ -396,8 +418,103 @@ void vprobot::control::ai::CAIControlSystem::UpdateStates(
 	}
 }
 
-/* Обновить карту */
-void vprobot::control::ai::CAIControlSystem::UpdateMap(STreeNode *Node,
-		const GridMap &ParentMap) {
+/* Проверить на фол */
+bool vprobot::control::ai::CAIControlSystem::CheckForFoul(STreeNode *Node,
+		const StateSet &States) {
+	size_t i;
 
+	for (i = 0; i < m_Count; i++) {
+		int rx, ry;
+
+		rx = static_cast<int>((States[i].s_MeanState[0] - m_StartX) / m_MapWidth
+				* m_NumWidth);
+		ry = static_cast<int>((States[i].s_MeanState[1] - m_StartY)
+				/ m_MapHeight * m_NumHeight);
+		if (rx < 0 || ry < 0 || rx >= static_cast<int>(m_NumWidth)
+				|| ry >= static_cast<int>(m_NumHeight)
+				|| !LessThanZero(Node->Map.row(rx)[ry]))
+			return true;
+	}
+	return false;
+}
+
+/* Обновить карту */
+void vprobot::control::ai::CAIControlSystem::UpdateMap(STreeNode *Node) {
+	size_t i, x, y;
+	double dx = m_MapWidth / m_NumWidth, dy = m_MapHeight / m_NumHeight;
+	GridMap odMap = GridMap::Zero(m_NumWidth, m_NumHeight);
+
+	for (i = 0; i < m_Count; i++) {
+		GridMap dMap = GridMap::Zero(m_NumWidth, m_NumHeight);
+		int mx_a, mx_b, my_a, my_b;
+		double rx, ry;
+
+		mx_a = static_cast<int>((Node->States[i].s_MeanState[0] - m_MaxLength
+				- m_StartX) / dx - 0.5);
+		mx_b = static_cast<int>((Node->States[i].s_MeanState[0] + m_MaxLength
+				- m_StartX) / dx - 0.5);
+		my_a = static_cast<int>((Node->States[i].s_MeanState[1] - m_MaxLength
+				- m_StartY) / dy - 0.5);
+		my_b = static_cast<int>((Node->States[i].s_MeanState[1] + m_MaxLength
+				- m_StartY) / dy - 0.5);
+		if (mx_a < 0)
+			mx_a = 0;
+		if (my_a < 0)
+			my_a = 0;
+		if (mx_b >= static_cast<int>(m_NumWidth))
+			mx_b = static_cast<int>(m_NumWidth - 1);
+		if (my_b >= static_cast<int>(m_NumHeight))
+			my_b = static_cast<int>(m_NumHeight - 1);
+		for (x = static_cast<size_t>(mx_a), rx = dx * 0.5 + m_StartX;
+				x <= static_cast<size_t>(mx_b); x++, rx += dx)
+			for (y = static_cast<size_t>(my_a), ry = dy * 0.5 + m_StartY;
+					y <= static_cast<size_t>(my_b); y++, ry += dy) {
+				if (!EqualsZero(dMap.row(x)[y]))
+					continue;
+
+				double cx = rx - Node->States[i].s_MeanState[0], cy = ry
+						- Node->States[i].s_MeanState[1], nangle;
+
+				nangle = CorrectAngle(
+						atan2(cy, cx) - Node->States[i].s_MeanState[2]);
+				if (GreaterThan(abs(nangle), m_MaxAngle)
+						|| GreaterThan(cx * cx + cy * cy,
+								m_MaxLength * m_MaxLength))
+					continue;
+
+				int tx = LessThanZero(cx) ? -1 : 1, ty =
+						LessThanZero(cy) ? -1 : 1, ox = static_cast<int>(abs(cx)
+						/ dx), oy = static_cast<int>(abs(cy) / dy), k;
+
+				if (ox > oy) {
+					double t = abs(cy / cx);
+					for (k = ox; k >= 0; k--) {
+						size_t fx = x - k * tx;
+						double ny = ry - k * t * ty;
+						size_t fy = static_cast<size_t>((ny - m_StartY) / dy);
+
+						if (Node->Map.row(fx)[fy] > 0) {
+							dMap.row(fx)[fy] = m_Occ;
+							break;
+						} else
+							dMap.row(fx)[fy] = m_Free;
+					}
+				} else {
+					double t = abs(cx / cy);
+					for (k = oy; k >= 0; k--) {
+						size_t fy = y - k * ty;
+						double nx = rx - k * t * tx;
+						size_t fx = static_cast<size_t>((nx - m_StartX) / dx);
+
+						if (Node->Map.row(fx)[fy] > 0) {
+							dMap.row(fx)[fy] = m_Occ;
+							break;
+						} else
+							dMap.row(fx)[fy] = m_Free;
+					}
+				}
+			}
+		odMap += dMap;
+	}
+	Node->Map += odMap;
 }

@@ -125,6 +125,7 @@ private:
 		STreeNode *Parent;
 		/* Дети */
 		STreeNode **Childs;
+		bool *Fouls;
 		/* Текущий вес */
 		double Weight;
 		/* Сумма весов детей */
@@ -137,6 +138,8 @@ private:
 		double Q;
 		/* Количество посещений */
 		std::size_t n_vis;
+		/* Количество фолов */
+		std::size_t n_foul;
 		/* Карта */
 		GridMap Map;
 		/* Состояния роботов */
@@ -155,8 +158,10 @@ private:
 	/* Обновить состояния */
 	void UpdateStates(const vprobot::robot::ControlCommand *Commands,
 			StateSet &States);
+	/* Проверить на фол */
+	bool CheckForFoul(STreeNode *Node, const StateSet &States);
 	/* Обновить карту */
-	void UpdateMap(STreeNode *Node, const GridMap &ParentMap);
+	void UpdateMap(STreeNode *Node);
 
 	/* Генерировать команды */
 	bool GenerateCommands();
