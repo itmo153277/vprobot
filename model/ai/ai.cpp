@@ -93,6 +93,7 @@ vprobot::control::ai::CAIControlSystem::CAIControlSystem(
 	m_Tmin = ControlSystemObject["t_min"].asDouble();
 	m_Cp = ControlSystemObject["c_p"].asDouble();
 	m_EndC = ControlSystemObject["end_c"].asDouble();
+	m_Time = 0;
 	m_Tree = new STreeNode[m_NumSimulations];
 	for (i = 0; i < m_NumSimulations; i++) {
 		m_Tree[i].Childs = new STreeNode *[m_NumCommands];
@@ -152,7 +153,7 @@ const ControlCommand * const vprobot::control::ai::CAIControlSystem::GetCommands
 
 			double da = m_MaxAngle * 2 / i_Measurement->Value.rows(), dx =
 					m_MapWidth / m_NumWidth, dy = m_MapHeight / m_NumHeight,
-					dd = sqrt(dx * dx + dy * dy) * 3;
+					dd = sqrt(dx * dx + dy * dy) * 2;
 			size_t x, y;
 
 			for (x = 0; x < m_NumWidth; x++)
@@ -176,8 +177,10 @@ const ControlCommand * const vprobot::control::ai::CAIControlSystem::GetCommands
 						if (EqualsZero(d)) {
 							md = 0;
 							d = m_MaxLength;
-						} else
-							md = d + dd;
+						} else {
+							md = d + dd / 2;
+							d -= dd / 2;
+						}
 						if (LessOrEquals(cd, d)) {
 							m_MapSet[i].row(x)[y] += m_Free;
 						} else if (LessOrEquals(cd, md)) {
@@ -219,14 +222,29 @@ void vprobot::control::ai::CAIControlSystem::DrawPresentation(
 		double dx = m_MapWidth / m_NumWidth, dy = m_MapHeight / m_NumHeight, cx,
 				cy;
 
-		for (i = 0, cx = 0; i < m_NumWidth; i++, cx += dx)
-			for (j = 0, cy = 0; j < m_NumHeight; j++, cy += dy) {
+		for (i = 0, cx = m_StartX; i < m_NumWidth; i++, cx += dx)
+			for (j = 0, cy = m_StartY; j < m_NumHeight; j++, cy += dy) {
 				double l = exp(OutMap.row(i)[j]);
 				int val = 255 - static_cast<int>(255 * l / (1 + l));
 
 				Driver.DrawRectangle(cx, cy, cx + dx, cy + dy, val, val, val,
 						255);
 			}
+		if (m_LastCommand != NULL) {
+			for (i = 0; i < m_Count; i++) {
+				Driver.DrawLine(m_Tree->States[i].s_MeanState[0],
+						m_Tree->States[i].s_MeanState[1],
+						m_Tree->States[i].s_MeanState[0]
+								+ cos(m_Tree->States[i].s_MeanState[2]) * 0.8
+										* IndicatorZoom,
+						m_Tree->States[i].s_MeanState[1]
+								+ sin(m_Tree->States[i].s_MeanState[2]) * 0.8
+										* IndicatorZoom, 0, 0, 255, 255);
+				Driver.DrawCircle(m_Tree->States[i].s_MeanState[0],
+						m_Tree->States[i].s_MeanState[1], 0.3 * IndicatorZoom,
+						255, 0, 0, 255);
+			}
+		}
 	}
 }
 
@@ -238,27 +256,34 @@ bool vprobot::control::ai::CAIControlSystem::GenerateCommands() {
 	for (auto m : m_MapSet)
 		OutMap += m;
 	InitializeNode(m_Tree, NULL, OutMap, m_States);
-	UpdateY(m_Tree, 0);
+	UpdateY(m_Tree, m_Time);
 	while (n < m_NumSimulations) {
-		AddChild(m_Tree, m_Tree + n, 1);
+		AddChild(m_Tree, m_Tree + n, m_Time + 1);
 		n++;
 	}
+	m_Time++;
 
+	/* Debug output */
 	cout << m_Tree[0].SelfY << endl << m_Tree[0].BestY << endl << m_Tree[0].Q
-			<< endl << endl;
+			<< endl << m_Tree[0].EndPoint << endl;
+
 	double diff = abs(m_Tree[0].SelfY - m_Tree[0].BestY);
 
 	if (GreaterThan(m_EndC, diff))
 		return true;
 	for (n = 0; n < m_NumCommands; n++) {
-		if (m_Tree[0].Fouls[n])
+		if (m_Tree[0].Fouls[n] || m_Tree[0].Childs[n] == NULL)
 			continue;
 		if (Equals(m_Tree[0].BestY, m_Tree[0].Childs[n]->BestY)) {
 			m_LastCommand = m_CommandLibrary[n];
+			/* Debug output */
+			cout << n << endl;
 			return false;
 		}
 	}
 	m_LastCommand = m_CommandLibrary[0];
+	/* Debug output */
+	cout << 0 << endl;
 	return false;
 }
 
@@ -291,29 +316,30 @@ void vprobot::control::ai::CAIControlSystem::UpdateY(STreeNode *Node,
 	Node->SelfY = Y;
 	Node->BestY = Node->SelfY;
 	Node->Q = 1 - m_CT * (Level / m_Tmin + Y / m_NumWidth / m_NumHeight);
+	Node->EndPoint = Level;
 
 	STreeNode *Parent = Node->Parent, *Child = Node;
 
 	while (Parent != NULL) {
-		if (Parent->BestY > Child->BestY)
+		if (GreaterOrEquals(Parent->BestY, Child->BestY)) {
 			Parent->BestY = Child->BestY;
-		if (Parent->Q < Child->Q)
-			Parent->Q = Child->Q;
+			Parent->EndPoint = Child->EndPoint;
+		}
 		Parent->n_vis++;
-		if ((Parent->n_vis + Parent->n_foul) >= m_NumCommands) {
-			Parent->WeightSum = 0;
-			for (i = 0; i < m_NumCommands; i++) {
-				if (Parent->Fouls[i])
-					continue;
-				Parent->Childs[i]->Weight =
-						Parent->Childs[i]->Q
-								+ 2 * m_Cp
-										* sqrt(
-												2 * log(Parent->n_vis + 1)
-														/ (Parent->Childs[i]->n_vis
-																+ 1));
-				Parent->WeightSum += Parent->Childs[i]->Weight;
+		Parent->Q = 0;
+		Parent->WeightSum = 0;
+		for (i = 0; i < m_NumCommands; i++) {
+			if (Parent->Fouls[i] || Parent->Childs[i] == NULL)
+				continue;
+			if (LessThan(Parent->Q, Parent->Childs[i]->Q)) {
+				Parent->Q = Parent->Childs[i]->Q;
 			}
+			Parent->Childs[i]->Weight = Parent->Childs[i]->Q
+					+ 2 * m_Cp
+							* sqrt(
+									2 * log(Parent->n_vis + 1)
+											/ (Parent->Childs[i]->n_vis + 1));
+			Parent->WeightSum += Parent->Childs[i]->Weight;
 		}
 		Child = Child->Parent;
 		Parent = Parent->Parent;
@@ -465,12 +491,13 @@ void vprobot::control::ai::CAIControlSystem::UpdateMap(STreeNode *Node) {
 			mx_b = static_cast<int>(m_NumWidth - 1);
 		if (my_b >= static_cast<int>(m_NumHeight))
 			my_b = static_cast<int>(m_NumHeight - 1);
-		for (x = static_cast<size_t>(mx_a), rx = dx * 0.5 + m_StartX;
-				x <= static_cast<size_t>(mx_b); x++, rx += dx)
-			for (y = static_cast<size_t>(my_a), ry = dy * 0.5 + m_StartY;
-					y <= static_cast<size_t>(my_b); y++, ry += dy) {
+		for (x = static_cast<size_t>(mx_a); x <= static_cast<size_t>(mx_b); x++)
+			for (y = static_cast<size_t>(my_a); y <= static_cast<size_t>(my_b);
+					y++) {
 				if (!EqualsZero(dMap.row(x)[y]))
 					continue;
+				rx = dx * (x + 0.5) + m_StartX;
+				ry = dy * (y + 0.5) + m_StartY;
 
 				double cx = rx - Node->States[i].s_MeanState[0], cy = ry
 						- Node->States[i].s_MeanState[1], nangle;
@@ -485,9 +512,16 @@ void vprobot::control::ai::CAIControlSystem::UpdateMap(STreeNode *Node) {
 				int tx = LessThanZero(cx) ? -1 : 1, ty =
 						LessThanZero(cy) ? -1 : 1, ox = static_cast<int>(abs(cx)
 						/ dx), oy = static_cast<int>(abs(cy) / dy), k;
+				size_t ft = 0;
 
+				if ((static_cast<int>(x) - ox * tx)
+						>= static_cast<int>(m_NumWidth))
+					ox = (m_NumWidth - x - 1) * tx;
+				if ((static_cast<int>(y) - oy * ty)
+						>= static_cast<int>(m_NumHeight))
+					oy = (m_NumHeight - y - 1) * ty;
 				if (ox > oy) {
-					double t = abs(cy / cx);
+					double t = abs(cy / cx) * dx;
 					for (k = ox; k >= 0; k--) {
 						size_t fx = x - k * tx;
 						double ny = ry - k * t * ty;
@@ -496,11 +530,19 @@ void vprobot::control::ai::CAIControlSystem::UpdateMap(STreeNode *Node) {
 						if (Node->Map.row(fx)[fy] > 0) {
 							dMap.row(fx)[fy] = m_Occ;
 							break;
-						} else
+						} else {
+							if (k < ox && ft != fy) {
+								if (Node->Map.row(fx)[ft] > 0)
+									break;
+								if (Node->Map.row(fx - tx)[fy] > 0)
+									break;
+							}
+							ft = fy;
 							dMap.row(fx)[fy] = m_Free;
+						}
 					}
 				} else {
-					double t = abs(cx / cy);
+					double t = abs(cx / cy) * dy;
 					for (k = oy; k >= 0; k--) {
 						size_t fy = y - k * ty;
 						double nx = rx - k * t * tx;
@@ -509,8 +551,16 @@ void vprobot::control::ai::CAIControlSystem::UpdateMap(STreeNode *Node) {
 						if (Node->Map.row(fx)[fy] > 0) {
 							dMap.row(fx)[fy] = m_Occ;
 							break;
-						} else
+						} else {
+							if (k < oy && ft != fx) {
+								if (Node->Map.row(ft)[fy] > 0)
+									break;
+								if (Node->Map.row(fx)[fy - ty] > 0)
+									break;
+							}
+							ft = fx;
 							dMap.row(fx)[fy] = m_Free;
+						}
 					}
 				}
 			}

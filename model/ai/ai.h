@@ -93,6 +93,8 @@ private:
 	double m_Cp;
 	/* Критерий окончания */
 	double m_EndC;
+	/* Текущее время */
+	int m_Time;
 	/* Библиотека команд */
 	std::size_t m_NumCommands;
 	vprobot::robot::ControlCommand **m_CommandLibrary;
@@ -123,6 +125,8 @@ private:
 	struct STreeNode {
 		/* Родитель */
 		STreeNode *Parent;
+		/* Конечный пункт */
+		int EndPoint;
 		/* Дети */
 		STreeNode **Childs;
 		bool *Fouls;
