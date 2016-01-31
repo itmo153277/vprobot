@@ -26,6 +26,8 @@
 #include "localization/ekf.h"
 #include "mapping/grid.h"
 #include "ai/ai.h"
+#include "ai/simple-ai.h"
+#include "ai/mcts-ai.h"
 
 using namespace ::std;
 using namespace ::vprobot;
@@ -36,6 +38,8 @@ using namespace ::vprobot::control;
 using namespace ::vprobot::control::localization;
 using namespace ::vprobot::control::mapping;
 using namespace ::vprobot::control::ai;
+using namespace ::vprobot::control::simple_ai;
+using namespace ::vprobot::control::mcts_ai;
 using namespace ::vprobot::scene;
 
 CScene *vprobot::Scene(const Json::Value &SceneObject) {
@@ -65,16 +69,19 @@ CScene *vprobot::Scene(const Json::Value &SceneObject) {
 					[&]() {return new CRobotWithPointsPosition(SceneObject["robot"], *Map);},
 					[&]() {return new CRobotWithScanner(SceneObject["robot"], *Map);}};
 
-	const int cControlSystemsTypes = 4;
+	const int cControlSystemsTypes = 6;
 	static const char *ControlSystemAliases[cControlSystemsTypes] = {
-			"Sequential", "EKF Localization", "Grid Mapper", "AI"};
+			"Sequential", "EKF Localization", "Grid Mapper", "AI", "Simple AI",
+			"MCTS AI"};
 
 	function<CControlSystem *()> ControlSystemConstructors[cControlSystemsTypes] =
 			{
 					[&]() {return new CSequentialControlSystem(SceneObject["control_system"]);},
 					[&]() {return new CEKFLocalization(SceneObject["control_system"]);},
 					[&]() {return new CGridMapper(SceneObject["control_system"]);},
-					[&]() {return new CAIControlSystem(SceneObject["control_system"]);}};
+					[&]() {return new CAIControlSystem(SceneObject["control_system"]);},
+					[&]() {return new CSimpleAI(SceneObject["control_system"]);},
+					[&]() {return new CMCTSAI(SceneObject["control_system"]);}};
 
 	size_t i;
 

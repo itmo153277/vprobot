@@ -153,7 +153,7 @@ const ControlCommand * const vprobot::control::ai::CAIControlSystem::GetCommands
 
 			double da = m_MaxAngle * 2 / i_Measurement->Value.rows(), dx =
 					m_MapWidth / m_NumWidth, dy = m_MapHeight / m_NumHeight,
-					dd = sqrt(dx * dx + dy * dy) * 2;
+					dd = sqrt(dx * dx + dy * dy);
 			size_t x, y;
 
 			for (x = 0; x < m_NumWidth; x++)
@@ -178,8 +178,7 @@ const ControlCommand * const vprobot::control::ai::CAIControlSystem::GetCommands
 							md = 0;
 							d = m_MaxLength;
 						} else {
-							md = d + dd / 2;
-							d -= dd / 2;
+							md = d + dd;
 						}
 						if (LessOrEquals(cd, d)) {
 							m_MapSet[i].row(x)[y] += m_Free;
@@ -227,24 +226,24 @@ void vprobot::control::ai::CAIControlSystem::DrawPresentation(
 				double l = exp(OutMap.row(i)[j]);
 				int val = 255 - static_cast<int>(255 * l / (1 + l));
 
-				Driver.DrawRectangle(cx, cy, cx + dx, cy + dy, val, val, val,
-						255);
+				Driver.DrawRectangle(cx, cy, cx + dx, cy + dy, 0, 0, 0,
+						255 - val);
 			}
-		if (m_LastCommand != NULL) {
-			for (i = 0; i < m_Count; i++) {
-				Driver.DrawLine(m_Tree->States[i].s_MeanState[0],
-						m_Tree->States[i].s_MeanState[1],
-						m_Tree->States[i].s_MeanState[0]
-								+ cos(m_Tree->States[i].s_MeanState[2]) * 0.8
-										* IndicatorZoom,
-						m_Tree->States[i].s_MeanState[1]
-								+ sin(m_Tree->States[i].s_MeanState[2]) * 0.8
-										* IndicatorZoom, 0, 0, 255, 255);
-				Driver.DrawCircle(m_Tree->States[i].s_MeanState[0],
-						m_Tree->States[i].s_MeanState[1], 0.3 * IndicatorZoom,
-						255, 0, 0, 255);
-			}
-		}
+		/*if (m_LastCommand != NULL) {
+		 for (i = 0; i < m_Count; i++) {
+		 Driver.DrawLine(m_Tree->States[i].s_MeanState[0],
+		 m_Tree->States[i].s_MeanState[1],
+		 m_Tree->States[i].s_MeanState[0]
+		 + cos(m_Tree->States[i].s_MeanState[2]) * 0.8
+		 * IndicatorZoom,
+		 m_Tree->States[i].s_MeanState[1]
+		 + sin(m_Tree->States[i].s_MeanState[2]) * 0.8
+		 * IndicatorZoom, 0, 0, 255, 255);
+		 Driver.DrawCircle(m_Tree->States[i].s_MeanState[0],
+		 m_Tree->States[i].s_MeanState[1], 0.3 * IndicatorZoom,
+		 255, 0, 0, 255);
+		 }
+		 }*/
 	}
 }
 

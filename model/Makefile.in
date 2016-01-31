@@ -103,7 +103,8 @@ am__dirstamp = $(am__leading_dot)dirstamp
 am_libvprmodel_a_OBJECTS = control.$(OBJEXT) line.$(OBJEXT) \
 	map.$(OBJEXT) parser.$(OBJEXT) presentation.$(OBJEXT) \
 	robot.$(OBJEXT) localization/ekf.$(OBJEXT) \
-	mapping/grid.$(OBJEXT) ai/ai.$(OBJEXT)
+	mapping/grid.$(OBJEXT) ai/ai.$(OBJEXT) ai/simple-ai.$(OBJEXT) \
+	ai/mcts-ai.$(OBJEXT)
 libvprmodel_a_OBJECTS = $(am_libvprmodel_a_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -277,8 +278,8 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 noinst_LIBRARIES = libvprmodel.a
-libvprmodel_a_SOURCES = control.cpp line.cpp map.cpp parser.cpp presentation.cpp robot.cpp localization/ekf.cpp mapping/grid.cpp ai/ai.cpp
-noinst_HEADERS = control.h line.h map.h parser.h presentation.h robot.h scene.h localization/ekf.h mapping/grid.h ai/ai.h
+libvprmodel_a_SOURCES = control.cpp line.cpp map.cpp parser.cpp presentation.cpp robot.cpp localization/ekf.cpp mapping/grid.cpp ai/ai.cpp ai/simple-ai.cpp ai/mcts-ai.cpp
+noinst_HEADERS = control.h line.h map.h parser.h presentation.h robot.h scene.h localization/ekf.h mapping/grid.h ai/ai.h ai/simple-ai.h ai/mcts-ai.h
 all: all-am
 
 .SUFFIXES:
@@ -339,6 +340,9 @@ ai/$(DEPDIR)/$(am__dirstamp):
 	@$(MKDIR_P) ai/$(DEPDIR)
 	@: > ai/$(DEPDIR)/$(am__dirstamp)
 ai/ai.$(OBJEXT): ai/$(am__dirstamp) ai/$(DEPDIR)/$(am__dirstamp)
+ai/simple-ai.$(OBJEXT): ai/$(am__dirstamp) \
+	ai/$(DEPDIR)/$(am__dirstamp)
+ai/mcts-ai.$(OBJEXT): ai/$(am__dirstamp) ai/$(DEPDIR)/$(am__dirstamp)
 
 libvprmodel.a: $(libvprmodel_a_OBJECTS) $(libvprmodel_a_DEPENDENCIES) $(EXTRA_libvprmodel_a_DEPENDENCIES) 
 	$(AM_V_at)-rm -f libvprmodel.a
@@ -361,6 +365,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/presentation.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/robot.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@ai/$(DEPDIR)/ai.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@ai/$(DEPDIR)/mcts-ai.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@ai/$(DEPDIR)/simple-ai.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@localization/$(DEPDIR)/ekf.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@mapping/$(DEPDIR)/grid.Po@am__quote@
 
