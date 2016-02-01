@@ -226,8 +226,8 @@ void vprobot::control::ai::CAIControlSystem::DrawPresentation(
 				double l = exp(OutMap.row(i)[j]);
 				int val = 255 - static_cast<int>(255 * l / (1 + l));
 
-				Driver.DrawRectangle(cx, cy, cx + dx, cy + dy, 0, 0, 0,
-						255 - val);
+				Driver.DrawRectangle(cx, cy, cx + dx, cy + dy, val, val, val,
+						255);
 			}
 		/*if (m_LastCommand != NULL) {
 		 for (i = 0; i < m_Count; i++) {

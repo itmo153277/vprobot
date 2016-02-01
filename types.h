@@ -29,7 +29,7 @@ const double ErrorDomain = 0.00001;
 
 /* Минимум */
 template<typename T>
-T &min(T &x, T &y) {
+T min(T x, T y) {
 	if (x < y)
 		return x;
 	return y;
@@ -37,7 +37,7 @@ T &min(T &x, T &y) {
 
 /* Максимум */
 template<typename T>
-T &max(T &x, T &y) {
+T max(T x, T y) {
 	if (x < y)
 		return y;
 	return x;
