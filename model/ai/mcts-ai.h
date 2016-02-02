@@ -87,8 +87,12 @@ private:
 	StateSet m_States;
 	/* Критерий окончания */
 	double m_EndC;
+	/* Критерий выборки */
+	double m_SelectC;
 	/* Количество холостых ходов */
 	std::size_t m_AddMoves;
+	/* Количество симуляций */
+	std::size_t m_NumSimulations;
 	/* Генератор случайных чисел */
 	std::default_random_engine m_Generator;
 	/* Распределение */
@@ -101,9 +105,27 @@ private:
 		int Time;
 		double Y;
 
-		SSample(double CurY): Time(0), Y(CurY) {
+		SSample() :
+				Time(0), Y(0) {
 		}
 	};
+
+	/* Ветви дерева */
+	struct STreeNode {
+		STreeNode *Parent;
+		STreeNode **Childs;
+		STreeNode *TraceBack;
+		bool *Fouls;
+		double Y;
+		double Time;
+		std::size_t n_vis;
+		std::size_t n_fouls;
+		std::size_t cmd;
+		int BestChild;
+		StateSet States;
+	};
+	/* Дерево */
+	STreeNode *m_Tree;
 
 	/* Вывод данных */
 	struct SGridPresentationPrameters: public vprobot::presentation::SPresentationParameters {
@@ -119,6 +141,8 @@ private:
 			StateSet &States);
 	/* Проверить на фол */
 	bool CheckForFoul(const BinaryMap &Map, const StateSet &States);
+	/* Проверить на фол */
+	bool CheckForStaticFoul(const StateSet &States);
 	/* Генерировать команды */
 	bool GenerateCommands();
 	/* Пройти по кругу */
@@ -136,7 +160,14 @@ private:
 	/* Преобразовать y в номер */
 	int ConvertY(double y);
 	/* Сгенерировать семпл */
-	void GenerateSample(SSample &Sample, const GridMap &Map, const StateSet &States);
+	void GenerateSample(SSample &Sample, STreeNode *Node);
+	/* Инициализация ветви */
+	void InitializeNode(STreeNode *Node, STreeNode *Parent,
+			const StateSet &States);
+	/* Выбор ветви */
+	int SelectNode(STreeNode *Parent);
+	/* Обратное распространение */
+	void BackPropagation(const SSample &Sample, STreeNode *Node);
 
 protected:
 	/* Парсинг параметров для экрана */

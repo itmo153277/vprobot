@@ -79,7 +79,14 @@ vprobot::control::mcts_ai::CMCTSAI::CMCTSAI(
 	}
 
 	m_EndC = ControlSystemObject["end_c"].asDouble();
+	m_SelectC = ControlSystemObject["select_c"].asDouble();
 	m_AddMoves = ControlSystemObject["add_moves"].asInt();
+	m_NumSimulations = ControlSystemObject["num_simulations"].asInt();
+	m_Tree = new STreeNode[m_NumSimulations];
+	for (i = 0; i < m_NumSimulations; i++) {
+		m_Tree[i].Childs = new STreeNode *[m_NumCommands];
+		m_Tree[i].Fouls = new bool[m_NumCommands];
+	}
 
 	size_t j;
 
@@ -108,6 +115,11 @@ vprobot::control::mcts_ai::CMCTSAI::~CMCTSAI() {
 		delete[] m_CommandLibrary[i];
 	}
 	delete[] m_CommandLibrary;
+	for (i = 0; i < m_NumSimulations; i++) {
+		delete[] m_Tree[i].Childs;
+		delete[] m_Tree[i].Fouls;
+	}
+	delete[] m_Tree;
 }
 
 SPresentationParameters *vprobot::control::mcts_ai::CMCTSAI::ParsePresentation(
@@ -243,6 +255,23 @@ void vprobot::control::mcts_ai::CMCTSAI::UpdateStates(
 	}
 }
 
+bool vprobot::control::mcts_ai::CMCTSAI::CheckForStaticFoul(
+		const StateSet &States) {
+	size_t i;
+
+	for (i = 0; i < m_Count; i++) {
+		int rx, ry;
+
+		rx = ConvertX(States[i].s_MeanState[0]);
+		ry = ConvertX(States[i].s_MeanState[1]);
+		if (rx < 0 || ry < 0 || rx >= static_cast<int>(m_NumWidth)
+				|| ry >= static_cast<int>(m_NumHeight)
+				|| !LessThanZero(m_Map.row(rx)[ry]))
+			return true;
+	}
+	return false;
+}
+
 bool vprobot::control::mcts_ai::CMCTSAI::CheckForFoul(const BinaryMap &Map,
 		const StateSet &States) {
 	size_t i;
@@ -260,25 +289,51 @@ bool vprobot::control::mcts_ai::CMCTSAI::CheckForFoul(const BinaryMap &Map,
 }
 
 bool vprobot::control::mcts_ai::CMCTSAI::GenerateCommands() {
-	double deltaY = 0;
 	double Y = 0;
-	size_t i, j;
 
+	size_t i, j;
 	for (i = 0; i < m_NumWidth; i++) {
 		for (j = 0; j < m_NumHeight; j++) {
 			Y += 1 / cosh(m_Map.row(i)[j] * 0.64);
 		}
 	}
+	InitializeNode(m_Tree, NULL, m_States);
+	int cmd;
 
-	SSample Sample(0);
-
-	for (i = 0; i < 10; i++) {
-		GenerateSample(Sample, m_Map, m_States);
+	for (size_t n = 1; n < m_NumSimulations; n++) {
+		STreeNode *FreeNode = m_Tree + n;
+		STreeNode *ParentNode = m_Tree;
+		for (;;) {
+			cmd = SelectNode(ParentNode);
+			if (cmd < 0 || ParentNode->Childs[cmd] == NULL)
+				break;
+			ParentNode = ParentNode->Childs[cmd];
+		}
+		if (cmd < 0)
+			break;
+		InitializeNode(FreeNode, ParentNode, ParentNode->States);
+		ParentNode->Childs[cmd] = FreeNode;
+		FreeNode->cmd = cmd;
+		UpdateStates(m_CommandLibrary[cmd], FreeNode->States);
+		SSample Sample;
+		for (i = 0; i < 10; i++) {
+			GenerateSample(Sample, FreeNode);
+		}
+		Sample.Time /= 10;
+		Sample.Y = Sample.Y / 10 + Y;
+		BackPropagation(Sample, FreeNode);
 	}
-	cout << "Mean time: " << Sample.Time / 10.0 << endl;
-	cout << "Mean Y: " << Sample.Y / 10.0 + Y << endl;
 
-	if (GreaterThan(m_EndC, deltaY))
+	if (m_Tree[0].BestChild >= 0) {
+		m_LastCommand = m_CommandLibrary[m_Tree[0].BestChild];
+	} else {
+		m_LastCommand = NULL;
+	}
+
+	cout << "Mean Y: " << m_Tree[0].Y / m_Tree[0].n_vis << endl << "Mean time: "
+			<< m_Tree[0].Time / m_Tree[0].n_vis << endl << "Total visits: "
+			<< m_Tree[0].n_vis * 10 << endl << endl;
+	if (GreaterThan(m_EndC, abs(m_Tree[0].Y / m_Tree[0].n_vis - Y)))
 		return true;
 	return false;
 }
@@ -365,7 +420,7 @@ double vprobot::control::mcts_ai::CMCTSAI::GoLinear(GridMap &Map,
 			diff += dd;
 			bool endFlag = false;
 			while (diff > 0.5) {
-				dd -= 1;
+				diff -= 1;
 				py = y;
 				y += ty;
 				endFlag = GoExact(Map, GeneratedMap, VisitedMap, x, y, px, py,
@@ -385,7 +440,7 @@ double vprobot::control::mcts_ai::CMCTSAI::GoLinear(GridMap &Map,
 			diff += dd;
 			bool endFlag = false;
 			while (diff > 0.5) {
-				dd -= 1;
+				diff -= 1;
 				px = x;
 				x += tx;
 				endFlag = GoExact(Map, GeneratedMap, VisitedMap, x, y, px, py,
@@ -436,13 +491,12 @@ bool vprobot::control::mcts_ai::CMCTSAI::GoExact(GridMap &Map,
 	return endFlag;
 }
 
-/* Сгенерировать семпл */
 void vprobot::control::mcts_ai::CMCTSAI::GenerateSample(SSample &Sample,
-		const GridMap &Map, const StateSet &States) {
-	StateSet TempStates = States;
-	GridMap TempMap = Map;
+		STreeNode *Node) {
+	GridMap TempMap = m_Map;
+	StateSet TempStates = Node->States;
 	BinaryMap GeneratedMap(m_NumWidth, m_NumHeight);
-	size_t i, j;
+	size_t i, j, time = 0;
 	double diff;
 
 	for (i = 0; i < m_NumWidth; i++) {
@@ -450,8 +504,23 @@ void vprobot::control::mcts_ai::CMCTSAI::GenerateSample(SSample &Sample,
 			double t = RandomFunction();
 
 			t = log(t / (1 - t));
-			GeneratedMap.row(i)[j] = GreaterOrEquals(t, Map.row(i)[j]) ? 1 : 0;
+			GeneratedMap.row(i)[j] =
+					GreaterOrEquals(t, m_Map.row(i)[j]) ? 1 : 0;
 		}
+	}
+
+	STreeNode *BackNode = Node;
+
+	Node->TraceBack = NULL;
+	while (BackNode->Parent != NULL) {
+		BackNode->Parent->TraceBack = BackNode;
+		BackNode = BackNode->Parent;
+	}
+	while (BackNode->TraceBack != NULL) {
+		BackNode = BackNode->TraceBack;
+		Sample.Y += GoAround(TempMap, GeneratedMap, BackNode->States);
+		Sample.Time++;
+		time++;
 	}
 	i = m_AddMoves;
 	for (;;) {
@@ -473,15 +542,103 @@ void vprobot::control::mcts_ai::CMCTSAI::GenerateSample(SSample &Sample,
 			}
 		}
 		UpdateStates(cmd, TempStates);
-		diff = GoAround(TempMap, GeneratedMap, States);
-		Sample.Time++;
+		diff = GoAround(TempMap, GeneratedMap, TempStates);
 		Sample.Y += diff;
+		i--;
+		time++;
+		if (time > m_AddMoves * 2)
+			break;
 		if (GreaterThan(m_EndC, abs(diff))) {
-			i--;
 			if (i == 0)
 				break;
 		} else {
+			Sample.Time += m_AddMoves - i;
 			i = m_AddMoves;
 		}
+	}
+}
+
+void vprobot::control::mcts_ai::CMCTSAI::InitializeNode(STreeNode *Node,
+		STreeNode *Parent, const StateSet &States) {
+	size_t i;
+
+	Node->States = States;
+	Node->Parent = Parent;
+	Node->n_vis = 0;
+	Node->n_fouls = 0;
+	Node->Y = 0;
+	Node->Time = 0;
+	Node->BestChild = -1;
+	for (i = 0; i < m_NumCommands; i++) {
+		Node->Childs[i] = NULL;
+		Node->Fouls[i] = false;
+	}
+}
+
+int vprobot::control::mcts_ai::CMCTSAI::SelectNode(STreeNode *Parent) {
+	size_t ret, i;
+	if ((Parent->n_vis + Parent->n_fouls) < m_NumCommands) {
+		for (;;) {
+			i = static_cast<ssize_t>(RandomFunction()
+					* (m_NumCommands - Parent->n_fouls - Parent->n_vis - 1));
+			for (ret = 0; i > 0 && ret < m_NumCommands; ret++) {
+				if (Parent->Fouls[ret] || Parent->Childs[ret] != NULL)
+					continue;
+				i--;
+			}
+			if (ret == m_NumCommands)
+				break;
+			StateSet TempStates = Parent->States;
+			UpdateStates(m_CommandLibrary[ret], TempStates);
+			if (!CheckForStaticFoul(TempStates))
+				break;
+			Parent->Fouls[ret] = true;
+			Parent->n_fouls++;
+		}
+		if (ret == m_NumCommands)
+			return -1;
+	} else {
+		if (GreaterThan(RandomFunction(), m_SelectC)) {
+			return Parent->BestChild;
+		} else {
+			i = static_cast<ssize_t>(RandomFunction()
+					* (m_NumCommands - Parent->n_fouls - 1));
+			for (ret = 0; i > 0 && ret < m_NumCommands; ret++) {
+				if (Parent->Fouls[ret])
+					continue;
+				i--;
+			}
+		}
+	}
+	return ret;
+}
+
+void vprobot::control::mcts_ai::CMCTSAI::BackPropagation(const SSample &Sample,
+		STreeNode *Node) {
+	STreeNode *CurrentNode = Node;
+	STreeNode *ParentNode;
+	STreeNode *BestChild;
+
+	while (CurrentNode != NULL) {
+		CurrentNode->Y += Sample.Y;
+		CurrentNode->Time += Sample.Time;
+		CurrentNode->n_vis++;
+		ParentNode = CurrentNode->Parent;
+		if (ParentNode != NULL) {
+			if (ParentNode->BestChild < 0) {
+				ParentNode->BestChild = CurrentNode->cmd;
+			} else {
+				BestChild = ParentNode->Childs[ParentNode->BestChild];
+				double bestY = BestChild->Y / BestChild->n_vis, curY =
+						CurrentNode->Y / CurrentNode->n_vis, bestT =
+						BestChild->Time / BestChild->n_vis, curT =
+						CurrentNode->Time / CurrentNode->n_vis;
+				if (LessThan(curY, bestY)
+						|| (Equals(curY, bestY) && LessThan(curT, bestT))) {
+					ParentNode->BestChild = CurrentNode->cmd;
+				}
+			}
+		}
+		CurrentNode = ParentNode;
 	}
 }
