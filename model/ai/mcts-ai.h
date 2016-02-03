@@ -91,6 +91,8 @@ private:
 	double m_SelectC;
 	/* Количество холостых ходов */
 	std::size_t m_AddMoves;
+	/* Предел ходов */
+	std::size_t m_LimitMoves;
 	/* Количество симуляций */
 	std::size_t m_NumSimulations;
 	/* Генератор случайных чисел */
@@ -123,6 +125,7 @@ private:
 		std::size_t cmd;
 		int BestChild;
 		StateSet States;
+		int BestDepth;
 	};
 	/* Дерево */
 	STreeNode *m_Tree;

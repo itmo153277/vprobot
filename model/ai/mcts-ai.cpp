@@ -81,7 +81,8 @@ vprobot::control::mcts_ai::CMCTSAI::CMCTSAI(
 	m_EndC = ControlSystemObject["end_c"].asDouble();
 	m_SelectC = ControlSystemObject["select_c"].asDouble();
 	m_AddMoves = ControlSystemObject["add_moves"].asInt();
-	m_NumSimulations = ControlSystemObject["num_simulations"].asInt();
+	m_LimitMoves = ControlSystemObject["limit_moves"].asInt();
+	m_NumSimulations = ControlSystemObject["num_simulations"].asInt() + 1;
 	m_Tree = new STreeNode[m_NumSimulations];
 	for (i = 0; i < m_NumSimulations; i++) {
 		m_Tree[i].Childs = new STreeNode *[m_NumCommands];
@@ -298,6 +299,8 @@ bool vprobot::control::mcts_ai::CMCTSAI::GenerateCommands() {
 		}
 	}
 	InitializeNode(m_Tree, NULL, m_States);
+	m_Tree[0].BestDepth = 0;
+
 	int cmd;
 
 	for (size_t n = 1; n < m_NumSimulations; n++) {
@@ -315,12 +318,11 @@ bool vprobot::control::mcts_ai::CMCTSAI::GenerateCommands() {
 		ParentNode->Childs[cmd] = FreeNode;
 		FreeNode->cmd = cmd;
 		UpdateStates(m_CommandLibrary[cmd], FreeNode->States);
+
 		SSample Sample;
-		for (i = 0; i < 10; i++) {
-			GenerateSample(Sample, FreeNode);
-		}
-		Sample.Time /= 10;
-		Sample.Y = Sample.Y / 10 + Y;
+
+		GenerateSample(Sample, FreeNode);
+		Sample.Y += Y;
 		BackPropagation(Sample, FreeNode);
 	}
 
@@ -332,7 +334,12 @@ bool vprobot::control::mcts_ai::CMCTSAI::GenerateCommands() {
 
 	cout << "Mean Y: " << m_Tree[0].Y / m_Tree[0].n_vis << endl << "Mean time: "
 			<< m_Tree[0].Time / m_Tree[0].n_vis << endl << "Total visits: "
-			<< m_Tree[0].n_vis * 10 << endl << endl;
+			<< m_Tree[0].n_vis << endl << "Best node depth: "
+			<< m_Tree[0].BestDepth << endl << "Best node visits: "
+			<< (m_Tree[0].BestChild >= 0 ?
+					m_Tree[0].Childs[m_Tree[0].BestChild]->n_vis : 0) << endl
+			<< "Initial Y: " << Y << endl << "Expected diff: "
+			<< abs(m_Tree[0].Y / m_Tree[0].n_vis - Y) << endl << endl;
 	if (GreaterThan(m_EndC, abs(m_Tree[0].Y / m_Tree[0].n_vis - Y)))
 		return true;
 	return false;
@@ -520,7 +527,6 @@ void vprobot::control::mcts_ai::CMCTSAI::GenerateSample(SSample &Sample,
 		BackNode = BackNode->TraceBack;
 		Sample.Y += GoAround(TempMap, GeneratedMap, BackNode->States);
 		Sample.Time++;
-		time++;
 	}
 	i = m_AddMoves;
 	for (;;) {
@@ -546,7 +552,7 @@ void vprobot::control::mcts_ai::CMCTSAI::GenerateSample(SSample &Sample,
 		Sample.Y += diff;
 		i--;
 		time++;
-		if (time > m_AddMoves * 2)
+		if (time > m_LimitMoves)
 			break;
 		if (GreaterThan(m_EndC, abs(diff))) {
 			if (i == 0)
@@ -569,6 +575,7 @@ void vprobot::control::mcts_ai::CMCTSAI::InitializeNode(STreeNode *Node,
 	Node->Y = 0;
 	Node->Time = 0;
 	Node->BestChild = -1;
+	Node->BestDepth = 0;
 	for (i = 0; i < m_NumCommands; i++) {
 		Node->Childs[i] = NULL;
 		Node->Fouls[i] = false;
@@ -598,7 +605,7 @@ int vprobot::control::mcts_ai::CMCTSAI::SelectNode(STreeNode *Parent) {
 		if (ret == m_NumCommands)
 			return -1;
 	} else {
-		if (GreaterThan(RandomFunction(), m_SelectC)) {
+		if (GreaterThan(m_SelectC, RandomFunction())) {
 			return Parent->BestChild;
 		} else {
 			i = static_cast<ssize_t>(RandomFunction()
@@ -618,8 +625,10 @@ void vprobot::control::mcts_ai::CMCTSAI::BackPropagation(const SSample &Sample,
 	STreeNode *CurrentNode = Node;
 	STreeNode *ParentNode;
 	STreeNode *BestChild;
+	int BestDepth = 1;
 
 	while (CurrentNode != NULL) {
+		BestDepth++;
 		CurrentNode->Y += Sample.Y;
 		CurrentNode->Time += Sample.Time;
 		CurrentNode->n_vis++;
@@ -638,6 +647,10 @@ void vprobot::control::mcts_ai::CMCTSAI::BackPropagation(const SSample &Sample,
 					ParentNode->BestChild = CurrentNode->cmd;
 				}
 			}
+			if (ParentNode->BestChild == CurrentNode->cmd) {
+				ParentNode->BestDepth = BestDepth;
+			}
+			BestDepth = ParentNode->BestDepth;
 		}
 		CurrentNode = ParentNode;
 	}
