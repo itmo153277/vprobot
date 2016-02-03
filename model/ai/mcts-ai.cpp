@@ -63,6 +63,8 @@ vprobot::control::mcts_ai::CMCTSAI::CMCTSAI(
 	m_NumWidth = ControlSystemObject["num_width"].asInt();
 	m_NumHeight = ControlSystemObject["num_height"].asInt();
 	m_Map = GridMap::Zero(m_NumWidth, m_NumHeight);
+	m_MeanMap = GridMap::Zero(m_NumWidth, m_NumHeight);
+	m_NumMean = 0;
 	m_StartX = ControlSystemObject["start_x"].asDouble();
 	m_StartY = ControlSystemObject["start_y"].asDouble();
 
@@ -125,7 +127,7 @@ vprobot::control::mcts_ai::CMCTSAI::~CMCTSAI() {
 
 SPresentationParameters *vprobot::control::mcts_ai::CMCTSAI::ParsePresentation(
 		const Json::Value &PresentationObject) {
-	return new SGridPresentationPrameters(PresentationObject["robot"].asInt());
+	return new SGridPresentationPrameters(PresentationObject["draw"].asString());
 }
 
 void vprobot::control::mcts_ai::CMCTSAI::DrawPresentation(
@@ -138,14 +140,29 @@ void vprobot::control::mcts_ai::CMCTSAI::DrawPresentation(
 		double dx = m_MapWidth / m_NumWidth, dy = m_MapHeight / m_NumHeight, cx,
 				cy;
 
-		for (i = 0, cx = m_StartX; i < m_NumWidth; i++, cx += dx)
-			for (j = 0, cy = m_StartY; j < m_NumHeight; j++, cy += dy) {
-				double l = exp(m_Map.row(i)[j]);
-				int val = 255 - static_cast<int>(255 * l / (1 + l));
+		if (i_Params->m_Type == "Result map") {
+			for (i = 0, cx = m_StartX; i < m_NumWidth; i++, cx += dx) {
+				for (j = 0, cy = m_StartY; j < m_NumHeight; j++, cy += dy) {
+					double l = exp(m_Map.row(i)[j]);
+					int val = 255 - static_cast<int>(255 * l / (1 + l));
 
-				Driver.DrawRectangle(cx, cy, cx + dx, cy + dy, val, val, val,
-						255);
+					Driver.DrawRectangle(cx, cy, cx + dx, cy + dy, val, val,
+							val, 255);
+				}
 			}
+		} else if (i_Params->m_Type == "Mean map") {
+			if (m_NumMean > 0) {
+				for (i = 0, cx = m_StartX; i < m_NumWidth; i++, cx += dx) {
+					for (j = 0, cy = m_StartY; j < m_NumHeight; j++, cy += dy) {
+						double l = m_MeanMap.row(i)[j];
+						int val = 255 - static_cast<int>(l / m_NumMean * 255);
+
+						Driver.DrawRectangle(cx, cy, cx + dx, cy + dy, val, val,
+								val, 255);
+					}
+				}
+			}
+		}
 	}
 }
 
@@ -153,6 +170,8 @@ const ControlCommand * const vprobot::control::mcts_ai::CMCTSAI::GetCommands(
 		const SMeasures * const *Measurements) {
 	size_t i;
 
+	m_MeanMap = GridMap::Zero(m_NumWidth, m_NumHeight);
+	m_NumMean = 0;
 	if (m_LastCommand != NULL) {
 		UpdateStates(m_LastCommand, m_States);
 	}
@@ -283,7 +302,7 @@ bool vprobot::control::mcts_ai::CMCTSAI::CheckForFoul(const BinaryMap &Map,
 		rx = ConvertX(States[i].s_MeanState[0]);
 		ry = ConvertX(States[i].s_MeanState[1]);
 		if (rx < 0 || ry < 0 || rx >= static_cast<int>(m_NumWidth)
-				|| ry >= static_cast<int>(m_NumHeight) || !Map.row(rx)[ry])
+				|| ry >= static_cast<int>(m_NumHeight) || Map.row(rx)[ry])
 			return true;
 	}
 	return false;
@@ -308,7 +327,16 @@ bool vprobot::control::mcts_ai::CMCTSAI::GenerateCommands() {
 		STreeNode *ParentNode = m_Tree;
 		for (;;) {
 			cmd = SelectNode(ParentNode);
-			if (cmd < 0 || ParentNode->Childs[cmd] == NULL)
+			if (cmd < 0) { //Terminate state
+				STreeNode *ParentNodeParent = ParentNode->Parent;
+				if (ParentNode->Parent == NULL)
+					break;
+				ParentNodeParent->Fouls[ParentNode->cmd] = true;
+				ParentNodeParent->n_fouls++;
+				ParentNode = ParentNodeParent;
+				continue;
+			}
+			if (ParentNode->Childs[cmd] == NULL)
 				break;
 			ParentNode = ParentNode->Childs[cmd];
 		}
@@ -326,8 +354,8 @@ bool vprobot::control::mcts_ai::CMCTSAI::GenerateCommands() {
 		BackPropagation(Sample, FreeNode);
 	}
 
-	if (m_Tree[0].BestChild >= 0) {
-		m_LastCommand = m_CommandLibrary[m_Tree[0].BestChild];
+	if (m_Tree[0].BestChildComputed >= 0) {
+		m_LastCommand = m_CommandLibrary[m_Tree[0].BestChildComputed];
 	} else {
 		m_LastCommand = NULL;
 	}
@@ -508,11 +536,9 @@ void vprobot::control::mcts_ai::CMCTSAI::GenerateSample(SSample &Sample,
 
 	for (i = 0; i < m_NumWidth; i++) {
 		for (j = 0; j < m_NumHeight; j++) {
-			double t = RandomFunction();
+			double t = RandomFunction(), l = exp(m_Map.row(i)[j]);
 
-			t = log(t / (1 - t));
-			GeneratedMap.row(i)[j] =
-					GreaterOrEquals(t, m_Map.row(i)[j]) ? 1 : 0;
+			GeneratedMap.row(i)[j] = LessThan(t, l / (l + 1)) ? 1 : 0;
 		}
 	}
 
@@ -523,8 +549,10 @@ void vprobot::control::mcts_ai::CMCTSAI::GenerateSample(SSample &Sample,
 		BackNode->Parent->TraceBack = BackNode;
 		BackNode = BackNode->Parent;
 	}
-	while (BackNode->TraceBack != NULL) {
+	for (;;) {
 		BackNode = BackNode->TraceBack;
+		if (BackNode->TraceBack == NULL)
+			break;
 		Sample.Y += GoAround(TempMap, GeneratedMap, BackNode->States);
 		Sample.Time++;
 	}
@@ -548,6 +576,9 @@ void vprobot::control::mcts_ai::CMCTSAI::GenerateSample(SSample &Sample,
 			}
 		}
 		UpdateStates(cmd, TempStates);
+		if (m_NumMean == 0) {
+			m_MeanMap.row(ConvertX(TempStates[0].s_MeanState[0]))[ConvertY(TempStates[0].s_MeanState[1])] = 1;
+		}
 		diff = GoAround(TempMap, GeneratedMap, TempStates);
 		Sample.Y += diff;
 		i--;
@@ -562,6 +593,13 @@ void vprobot::control::mcts_ai::CMCTSAI::GenerateSample(SSample &Sample,
 			i = m_AddMoves;
 		}
 	}
+	for (i = 0; i < m_NumWidth; i++) {
+		for (j = 0; j < m_NumHeight; j++) {
+			double l = exp(TempMap.row(i)[j]);
+			m_MeanMap.row(i)[j] += l / (1 + l);
+		}
+	}
+	m_NumMean++;
 }
 
 void vprobot::control::mcts_ai::CMCTSAI::InitializeNode(STreeNode *Node,
@@ -575,6 +613,7 @@ void vprobot::control::mcts_ai::CMCTSAI::InitializeNode(STreeNode *Node,
 	Node->Y = 0;
 	Node->Time = 0;
 	Node->BestChild = -1;
+	Node->BestChildComputed = -1;
 	Node->BestDepth = 0;
 	for (i = 0; i < m_NumCommands; i++) {
 		Node->Childs[i] = NULL;
@@ -606,6 +645,23 @@ int vprobot::control::mcts_ai::CMCTSAI::SelectNode(STreeNode *Parent) {
 			return -1;
 	} else {
 		if (GreaterThan(m_SelectC, RandomFunction())) {
+			if (Parent->BestChild >= 0 && Parent->Fouls[Parent->BestChild]) {
+				double bestY, curY, bestT, curT;
+
+				Parent->BestChild = -1;
+				for (i = 0; i < m_NumCommands; i++) {
+					if (Parent->Fouls[i] || Parent->Childs[i] == NULL)
+						continue;
+					curY = Parent->Childs[i]->Y / Parent->Childs[i]->n_vis;
+					curT = Parent->Childs[i]->Time / Parent->Childs[i]->n_vis;
+					if (Parent->BestChild < 0 || LessThan(curY, bestY)
+							|| (Equals(curY, bestY) && LessThan(curT, bestT))) {
+						Parent->BestChild = i;
+						bestT = curT;
+						bestY = curY;
+					}
+				}
+			}
 			return Parent->BestChild;
 		} else {
 			i = static_cast<ssize_t>(RandomFunction()
@@ -647,7 +703,20 @@ void vprobot::control::mcts_ai::CMCTSAI::BackPropagation(const SSample &Sample,
 					ParentNode->BestChild = CurrentNode->cmd;
 				}
 			}
-			if (ParentNode->BestChild == CurrentNode->cmd) {
+			if (ParentNode->BestChildComputed < 0) {
+				ParentNode->BestChildComputed = CurrentNode->cmd;
+			} else {
+				BestChild = ParentNode->Childs[ParentNode->BestChildComputed];
+				double bestY = BestChild->Y / BestChild->n_vis, curY =
+						CurrentNode->Y / CurrentNode->n_vis, bestT =
+						BestChild->Time / BestChild->n_vis, curT =
+						CurrentNode->Time / CurrentNode->n_vis;
+				if (LessThan(curY, bestY)
+						|| (Equals(curY, bestY) && LessThan(curT, bestT))) {
+					ParentNode->BestChildComputed = CurrentNode->cmd;
+				}
+			}
+			if (ParentNode->BestChildComputed == CurrentNode->cmd) {
 				ParentNode->BestDepth = BestDepth;
 			}
 			BestDepth = ParentNode->BestDepth;

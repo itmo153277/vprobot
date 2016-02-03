@@ -27,6 +27,7 @@
 #include <random>
 #include <functional>
 #include <vector>
+#include <string>
 #include <Eigen/Dense>
 #include <json/json.h>
 #include "../presentation.h"
@@ -66,6 +67,9 @@ private:
 	double m_RobotHeight;
 	/* Графическая карта */
 	GridMap m_Map;
+	/* Карта для отображения */
+	GridMap m_MeanMap;
+	std::size_t m_NumMean;
 	/* Размеры карты */
 	double m_MapWidth;
 	double m_MapHeight;
@@ -124,6 +128,7 @@ private:
 		std::size_t n_fouls;
 		std::size_t cmd;
 		int BestChild;
+		int BestChildComputed;
 		StateSet States;
 		int BestDepth;
 	};
@@ -132,10 +137,10 @@ private:
 
 	/* Вывод данных */
 	struct SGridPresentationPrameters: public vprobot::presentation::SPresentationParameters {
-		std::size_t m_Num;
+		std::string m_Type;
 
-		SGridPresentationPrameters(const std::size_t Num) :
-				m_Num(Num) {
+		SGridPresentationPrameters(const std::string &Type) :
+				m_Type(Type) {
 		}
 	};
 
